@@ -1140,7 +1140,7 @@ input[type=range] {
 
     <!-- Export buttons -->
     <button onclick="exportPDF()" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A6FD4,#2B87F5);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(26,111,212,.35)">
-      📄 ดาวน์โหลด / บันทึก PDF รายงาน
+      📄 บันทึกเป็น PDF
     </button>
 
     <button onclick="exportJSON()" style="width:100%;padding:15px;background:white;color:#1A6FD4;border:2px solid #1A6FD4;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
@@ -1846,40 +1846,63 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
   </div>
 
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <script>
-// Auto-print on desktop only
-if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  window.onload = () => { setTimeout(() => window.print(), 400); };
-}
+window.onload = async () => {
+  const { jsPDF } = window.jspdf;
+  const page = document.querySelector('.page');
+
+  // Small delay for fonts/images to load
+  await new Promise(r => setTimeout(r, 800));
+
+  const canvas = await html2canvas(page, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#F4F6FA',
+    logging: false,
+  });
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const pdfW = pdf.internal.pageSize.getWidth();
+  const pdfH = pdf.internal.pageSize.getHeight();
+  const imgW = canvas.width;
+  const imgH = canvas.height;
+  const ratio = pdfW / (imgW / 2 * 0.264583); // px to mm at 96dpi
+  const totalH = (imgH / 2) * 0.264583; // total height in mm
+
+  let yOffset = 0;
+  while (yOffset < totalH) {
+    if (yOffset > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, totalH);
+    yOffset += pdfH;
+  }
+
+  pdf.save('DPR_Report.pdf');
+};
 <\/script>
 </body></html>`;
 
-  // Detect mobile
-  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-  if (!isMobile) {
-    // Desktop: open popup and print
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.write(html);
-      win.document.close();
-      return;
-    }
+  // Always open in new tab — jsPDF will auto-save as PDF
+  const win = window.open('', '_blank');
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+    showToast('⏳ กำลังสร้าง PDF...', '');
+  } else {
+    // Popup blocked (some mobile browsers) — fallback to HTML download
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `DPR_${data.date||'report'}_${data.id}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('📥 ดาวน์โหลด HTML แล้ว — เปิดใน Chrome แล้วกด Share → Print', 'success');
   }
-
-  // Mobile / popup blocked: download as HTML then show instructions
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `DPR_${data.date||'report'}_${data.id}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  // Show mobile instructions toast
-  setTimeout(() => {
-    showToast('📥 ดาวน์โหลดแล้ว — เปิดไฟล์ใน Chrome แล้วกด Share → Print', 'success');
-  }, 600);
 }
 
 /* ── EXPORT FUNCTIONS ── */
