@@ -1329,14 +1329,32 @@ function updateProgress(type, val) {
 function toggleChip(btn) { btn.classList.toggle('sel'); }
 
 /* ── PHOTOS ── */
+function compressImage(dataUrl, maxW, maxH, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+
 function addPhotos(input) {
   const grid = document.getElementById('photoGrid');
   Array.from(input.files).forEach(file => {
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = async e => {
+      // Compress: max 800x600, quality 0.65 → ~50-100KB per photo
+      const compressed = await compressImage(e.target.result, 800, 600, 0.65);
       const div = document.createElement('div');
       div.className = 'photo-thumb';
-      div.innerHTML = `<img src="${e.target.result}" alt="photo">
+      div.innerHTML = `<img src="${compressed}" alt="photo">
         <button class="photo-del" onclick="this.parentElement.remove()">✕</button>`;
       grid.appendChild(div);
     };
@@ -1414,9 +1432,31 @@ const LS_KEY = 'dpr_tpssc_reports';
 function saveToLocal(data) {
   let arr = [];
   try { arr = JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch(e) {}
-  arr.unshift(data);          // newest first
-  if (arr.length > 90) arr.length = 90;  // keep max 90 reports
-  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  arr.unshift(data);
+  if (arr.length > 30) arr.length = 30;  // reduce to 30 to save space
+
+  // Try saving; if quota exceeded, remove photos from older reports
+  let saved = false;
+  while (!saved && arr.length > 0) {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(arr));
+      saved = true;
+    } catch(e) {
+      if (e.name === 'QuotaExceededError' || e.code === 22) {
+        // Strip photos from oldest report first
+        const oldest = arr[arr.length - 1];
+        if (oldest.photos && oldest.photos.length) {
+          oldest.photos = [];
+        } else {
+          arr.pop(); // remove oldest entirely
+        }
+      } else {
+        showToast('❌ บันทึกไม่ได้: ' + e.message, 'error');
+        break;
+      }
+    }
+  }
+  if (!saved) showToast('⚠️ พื้นที่เต็ม บันทึกโดยไม่มีรูปภาพ', 'error');
 }
 
 function loadReports() {
