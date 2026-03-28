@@ -1140,7 +1140,7 @@ input[type=range] {
 
     <!-- Export buttons -->
     <button onclick="exportPDF()" style="width:100%;padding:15px;background:linear-gradient(135deg,#1A6FD4,#2B87F5);color:white;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 16px rgba(26,111,212,.35)">
-      📄 ดาวน์โหลด PDF รายงาน
+      📄 ดาวน์โหลด / บันทึก PDF รายงาน
     </button>
 
     <button onclick="exportJSON()" style="width:100%;padding:15px;background:white;color:#1A6FD4;border:2px solid #1A6FD4;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
@@ -1846,23 +1846,40 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
   </div>
 
 </div>
-<script>window.onload=()=>{ setTimeout(()=>window.print(), 400); }<\/script>
-<!-- NOTE: window.onload above is scoped to the PDF popup window (win.document.write),
-     NOT this document. It does NOT conflict with the main window.onload below. -->
+<script>
+// Auto-print on desktop only
+if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  window.onload = () => { setTimeout(() => window.print(), 400); };
+}
+<\/script>
 </body></html>`;
 
-  const win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-  } else {
-    // fallback: download as HTML file
-    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `DPR_${data.date||'report'}_${data.id}.html`;
-    a.click();
+  // Detect mobile
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (!isMobile) {
+    // Desktop: open popup and print
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      return;
+    }
   }
+
+  // Mobile / popup blocked: download as HTML then show instructions
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `DPR_${data.date||'report'}_${data.id}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Show mobile instructions toast
+  setTimeout(() => {
+    showToast('📥 ดาวน์โหลดแล้ว — เปิดไฟล์ใน Chrome แล้วกด Share → Print', 'success');
+  }, 600);
 }
 
 /* ── EXPORT FUNCTIONS ── */
@@ -1946,7 +1963,8 @@ function showToast(msg, type='') {
   t.textContent = msg;
   t.className = 'toast show '+(type||'');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.className='toast', 3000);
+  const toastDuration = msg.length > 30 ? 6000 : 3000;
+  toastTimer = setTimeout(()=>t.className='toast', toastDuration);
 }
 
 /* ── INIT ── */
