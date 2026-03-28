@@ -1886,41 +1886,110 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
   </div>
 
 </div>
+<style>
+#pdf-loading {
+  position:fixed; inset:0; background:rgba(13,43,94,0.92);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  z-index:9999; color:white; font-family:'Sarabun',sans-serif;
+}
+#pdf-loading .ld-spinner {
+  width:48px; height:48px; border:5px solid rgba(255,255,255,.2);
+  border-top-color:#F1C40F; border-radius:50%;
+  animation:spin .8s linear infinite; margin-bottom:16px;
+}
+#pdf-loading .ld-text { font-size:16px; font-weight:700; margin-bottom:6px; }
+#pdf-loading .ld-sub  { font-size:12px; color:rgba(255,255,255,.6); }
+@keyframes spin { to { transform:rotate(360deg); } }
+<\/style>
+<div id="pdf-loading">
+  <div class="ld-spinner"></div>
+  <div class="ld-text">กำลังสร้าง PDF...</div>
+  <div class="ld-sub">กรุณารอสักครู่</div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <script>
 window.onload = async () => {
   const { jsPDF } = window.jspdf;
-  const page = document.querySelector('.page');
 
-  // Small delay for fonts/images to load
-  await new Promise(r => setTimeout(r, 800));
+  // Wait for fonts/images
+  await new Promise(r => setTimeout(r, 900));
 
-  const canvas = await html2canvas(page, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: '#F4F6FA',
-    logging: false,
-  });
+  const pdf     = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const pdfW    = pdf.internal.pageSize.getWidth();   // 210mm
+  const pdfH    = pdf.internal.pageSize.getHeight();  // 297mm
+  const margin  = 0;
+  const usableW = pdfW - margin * 2;
+  const usableH = pdfH - margin * 2;
+  const scale   = 2.5;
+  const mmPerPx = 0.264583;
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.92);
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  // ── Collect sections to render one-by-one ──
+  // Each "block" = one element we render independently
+  const blocks = [
+    document.querySelector('.pdf-header'),
+    document.querySelector('.meta-bar'),
+    document.querySelector('.pdf-body > .kpi-row'),
+    ...document.querySelectorAll('.pdf-section'),
+    document.querySelector('.pdf-footer'),
+  ].filter(Boolean);
 
-  const pdfW = pdf.internal.pageSize.getWidth();
-  const pdfH = pdf.internal.pageSize.getHeight();
-  const imgW = canvas.width;
-  const imgH = canvas.height;
-  const ratio = pdfW / (imgW / 2 * 0.264583); // px to mm at 96dpi
-  const totalH = (imgH / 2) * 0.264583; // total height in mm
+  let cursorY = margin;  // current Y position on current page (mm)
+  let firstPage = true;
 
-  let yOffset = 0;
-  while (yOffset < totalH) {
-    if (yOffset > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, totalH);
-    yOffset += pdfH;
+  for (const block of blocks) {
+    // Render this block to canvas
+    const canvas = await html2canvas(block, {
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false,
+    });
+
+    const imgW   = canvas.width;
+    const imgH   = canvas.height;
+    // Scale image to fit PDF width
+    const rendW  = usableW;
+    const rendH  = (imgH / imgW) * rendW;
+
+    // If block doesn't fit on remaining space → new page
+    // (allow first block to always go on first page)
+    if (!firstPage && cursorY + rendH > pdfH - margin) {
+      pdf.addPage();
+      cursorY = margin;
+    }
+    firstPage = false;
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+    // If single block is taller than a full page, split it
+    if (rendH > usableH) {
+      // Render in slices matching page height
+      const sliceHpx = Math.floor((usableH / rendH) * imgH);
+      let sliceStartPx = 0;
+      while (sliceStartPx < imgH) {
+        const sliceCanvas  = document.createElement('canvas');
+        const actualSliceH = Math.min(sliceHpx, imgH - sliceStartPx);
+        sliceCanvas.width  = imgW;
+        sliceCanvas.height = actualSliceH;
+        sliceCanvas.getContext('2d').drawImage(
+          canvas, 0, sliceStartPx, imgW, actualSliceH, 0, 0, imgW, actualSliceH
+        );
+        const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.92);
+        const sliceRendH = (actualSliceH / imgW) * rendW;
+        if (sliceStartPx > 0) { pdf.addPage(); cursorY = margin; }
+        pdf.addImage(sliceData, 'JPEG', margin, cursorY, rendW, sliceRendH);
+        cursorY += sliceRendH;
+        sliceStartPx += actualSliceH;
+      }
+    } else {
+      pdf.addImage(imgData, 'JPEG', margin, cursorY, rendW, rendH);
+      cursorY += rendH;
+    }
   }
 
+  document.getElementById('pdf-loading').style.display='none';
   pdf.save('DPR_Report.pdf');
 };
 <\/script>
