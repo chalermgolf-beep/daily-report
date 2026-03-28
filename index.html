@@ -1457,154 +1457,351 @@ function generatePDF(data) {
     ? new Date(data.date+'T00:00:00').toLocaleDateString('th-TH',{weekday:'long',year:'numeric',month:'long',day:'numeric'})
     : data.date;
 
-  const ckRows = CK_ITEMS.map(item => {
-    const st = data.checklist?.[item.id] || 'ready';
-    const color = st==='ready'?'#00B87A':st==='notready'?'#E03535':'#8892A4';
-    const label = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
-    return `<tr>
-      <td style="padding:6px 10px;border-bottom:1px solid #F0F4FA;font-size:12px">${item.label}</td>
-      <td style="padding:6px 10px;border-bottom:1px solid #F0F4FA;text-align:center">
-        <span style="background:${color}20;color:${color};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${label}</span>
-      </td>
-    </tr>`;
-  }).join('');
-
-  const issueSection = data.hasIssue ? `
-    <div style="background:#FFF0F0;border:1.5px solid #FFB3B3;border-radius:8px;padding:14px;margin-bottom:12px">
-      <div style="font-weight:700;color:#C62828;margin-bottom:8px;font-size:13px">⚠ มีปัญหา / Has Issue — ระดับ: ${esc(data.issueSeverity)||'—'}</div>
-      <div style="font-size:12px;margin-bottom:6px"><strong>รายละเอียด:</strong> ${esc(data.issueDesc)||'—'}</div>
-      <div style="font-size:12px"><strong>แนวทางแก้ไข:</strong> ${esc(data.issueAction)||'—'}</div>
-    </div>` : `<div style="background:#E6F9F3;border-radius:8px;padding:10px 14px;color:#00805A;font-size:12px;font-weight:600">✓ ไม่มีปัญหา / No Issue</div>`;
+  const pctDayNum  = parseInt(data.pctDay)||0;
+  const pctCumNum  = parseInt(data.pctCum)||0;
+  const manTotal   = (parseInt(data.manSafety)||0)+(parseInt(data.manSuper)||0)+(parseInt(data.manSkilled)||0);
 
   const html = `<!DOCTYPE html><html lang="th"><head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Sarabun',sans-serif; background:#fff; color:#1A202C; font-size:13px; }
-  .page { max-width:210mm; margin:0 auto; padding:12mm; }
-  .hdr { background:#0A1628; color:white; padding:14px 18px; border-radius:10px; margin-bottom:14px; }
-  .hdr h1 { font-size:16px; font-weight:700; }
-  .hdr p { font-size:10px; color:rgba(255,255,255,.6); margin-top:3px; }
-  .meta-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
-  .meta-pill { background:#EBF4FF; color:#1A6FD4; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; }
-  .section { margin-bottom:14px; }
-  .sec-title { font-size:11px; font-weight:700; color:#4A5568; text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; padding-bottom:5px; border-bottom:2px solid #1A6FD4; display:flex; align-items:center; gap:6px; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .field-box { background:#F4F6FA; border-radius:8px; padding:10px 12px; }
-  .field-box .lbl { font-size:10px; font-weight:600; color:#8892A4; margin-bottom:3px; text-transform:uppercase; }
-  .field-box .val { font-size:13px; font-weight:500; color:#1A202C; }
-  .ck-table { width:100%; border-collapse:collapse; }
-  .prog-row { display:flex; gap:10px; margin-bottom:8px; }
-  .prog-box { flex:1; background:#F0F7FF; border:1.5px solid #C5D8F5; border-radius:8px; padding:10px; text-align:center; }
-  .prog-num { font-size:24px; font-weight:700; color:#1A6FD4; }
-  .prog-cum .prog-num { color:#00B87A; }
-  .sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px; }
-  .sig-box { border:1.5px dashed #CDD3E0; border-radius:8px; padding:12px; text-align:center; min-height:60px; }
-  .sig-box .role { font-size:9px; color:#8892A4; text-transform:uppercase; margin-bottom:8px; }
-  .sig-box .name { font-size:13px; font-weight:700; color:#1A202C; }
-  .footer { text-align:center; font-size:10px; color:#8892A4; margin-top:16px; padding-top:10px; border-top:1px solid #E8ECF4; }
-  @media print { body { background:white; } .page { padding:8mm; } }
+:root {
+  --teal:    #2E7D7B;
+  --teal-dk: #1D5C5A;
+  --coral:   #E8705A;
+  --amber:   #E8A83A;
+  --olive:   #8BA04A;
+  --blush:   #E8A090;
+  --charcoal:#2C2C2C;
+  --cream:   #F5F0E8;
+  --white:   #FFFFFF;
+  --gray-lt: #F0EDE8;
+  --gray-bd: #D8D4CC;
+  --gray-md: #9A9590;
+  --text:    #2C2C2C;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--cream); color:var(--text); font-size:12px; line-height:1.55; }
+.page { max-width:210mm; margin:0 auto; background:var(--cream); padding:0; min-height:297mm; }
+
+/* ── HEADER ── */
+.pdf-header {
+  background: var(--teal);
+  padding: 0;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  min-height: 110px;
+}
+.pdf-header-left {
+  padding: 22px 28px 18px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+.pdf-header-left .org-name {
+  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.7);
+  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px;
+}
+.pdf-header-left .doc-title-big {
+  font-size: 36px; font-weight: 800; color: var(--white);
+  line-height: .95; letter-spacing: -.01em; text-transform: uppercase;
+}
+.pdf-header-left .doc-title-sub {
+  font-size: 11px; color: rgba(255,255,255,.65); margin-top: 6px; font-weight: 400;
+}
+.pdf-header-geo {
+  width: 140px; flex-shrink: 0;
+  display: grid; grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  overflow: hidden;
+}
+.geo-cell { width:70px; height:55px; position:relative; overflow:hidden; }
+.geo-cell.c1 { background:var(--coral); }
+.geo-cell.c2 { background:var(--charcoal); }
+.geo-cell.c3 { background:var(--amber); }
+.geo-cell.c4 { background:var(--olive); }
+/* Bauhaus quarter-circle shapes */
+.geo-cell.c1::after { content:''; position:absolute; width:100px; height:100px; background:var(--charcoal); border-radius:50%; bottom:-50px; right:-50px; }
+.geo-cell.c2::after { content:''; position:absolute; width:80px; height:80px; background:var(--blush); border-radius:50%; top:-40px; left:-40px; }
+.geo-cell.c3::after { content:''; position:absolute; width:60px; height:60px; background:var(--teal); border-radius:50%; top:-30px; right:-30px; }
+.geo-cell.c4::after { content:''; position:absolute; width:90px; height:90px; background:var(--coral); border-radius:50%; bottom:-45px; left:-45px; }
+
+/* ── META INFO BAR ── */
+.meta-bar {
+  background: var(--charcoal); padding: 10px 28px;
+  display: flex; gap: 0; flex-wrap: wrap;
+}
+.meta-item {
+  padding: 0 20px 0 0; margin-right: 20px;
+  border-right: 1px solid rgba(255,255,255,.15);
+}
+.meta-item:last-child { border-right: none; }
+.meta-item .mi-label { font-size: 8px; font-weight: 700; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 2px; }
+.meta-item .mi-val   { font-size: 11px; font-weight: 600; color: var(--white); }
+
+/* ── BODY ── */
+.pdf-body { padding: 20px 28px 24px; }
+
+/* ── KPI ROW ── */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:20px; border:2px solid var(--charcoal); border-radius:0; overflow:hidden; }
+.kpi-cell { padding:12px 14px; text-align:center; border-right:2px solid var(--charcoal); }
+.kpi-cell:last-child { border-right:none; }
+.kpi-cell.bg-teal   { background:var(--teal);    color:white; }
+.kpi-cell.bg-coral  { background:var(--coral);   color:white; }
+.kpi-cell.bg-amber  { background:var(--amber);   color:var(--charcoal); }
+.kpi-cell.bg-olive  { background:var(--olive);   color:white; }
+.kpi-cell .kc-num  { font-size:26px; font-weight:800; line-height:1; }
+.kpi-cell .kc-lbl  { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-top:3px; opacity:.8; }
+
+/* ── SECTION HEADER ── */
+.sec-hd {
+  background:var(--charcoal); color:white;
+  padding:7px 12px; margin-bottom:10px; margin-top:18px;
+  display:flex; align-items:center; gap:8px;
+}
+.sec-hd:first-child { margin-top:0; }
+.sec-hd .sh-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; }
+.sec-hd .sh-label em { color:var(--amber); font-style:normal; }
+.sec-hd-coral  { background:var(--coral); }
+.sec-hd-teal   { background:var(--teal); }
+.sec-hd-amber  { background:var(--amber); color:var(--charcoal); }
+.sec-hd-olive  { background:var(--olive); }
+
+/* ── FIELD TABLE ── */
+.info-table { width:100%; border-collapse:collapse; margin-bottom:10px; }
+.info-table tr td { padding:8px 12px; border:1.5px solid var(--charcoal); font-size:12px; vertical-align:top; }
+.info-table tr td:first-child { background:var(--teal); color:white; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.05em; width:34%; }
+.info-table tr td:last-child  { background:white; }
+
+/* ── TWO COL ── */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.panel { border:1.5px solid var(--charcoal); background:white; overflow:hidden; }
+.panel-hd { background:var(--amber); color:var(--charcoal); padding:6px 12px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+.panel-hd.ph-teal { background:var(--teal); color:white; }
+.panel-hd.ph-coral { background:var(--coral); color:white; }
+.panel-hd.ph-olive { background:var(--olive); color:white; }
+.panel-body { padding:10px 12px; font-size:12px; line-height:1.6; color:var(--text); }
+
+/* ── CHECKLIST ── */
+.ck-list { border:1.5px solid var(--charcoal); overflow:hidden; background:white; margin-bottom:12px; }
+.ck-item { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--gray-bd); }
+.ck-item:last-child { border-bottom:none; }
+.ck-item:nth-child(even) { background:var(--gray-lt); }
+.ck-name { font-size:11px; font-weight:600; }
+.ck-badge { font-size:9px; font-weight:800; padding:3px 10px; text-transform:uppercase; letter-spacing:.05em; }
+.ck-ready    { background:var(--olive);  color:white; }
+.ck-notready { background:var(--coral);  color:white; }
+.ck-na       { background:var(--gray-md);color:white; }
+
+/* ── PROGRESS BARS ── */
+.prog-section { margin-bottom:12px; }
+.prog-item { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.prog-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; width:130px; flex-shrink:0; }
+.prog-track { flex:1; height:16px; background:var(--gray-lt); border:1.5px solid var(--charcoal); overflow:hidden; }
+.prog-fill  { height:100%; }
+.fill-teal  { background:var(--teal); }
+.fill-amber { background:var(--amber); }
+.prog-val   { font-size:13px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
+
+/* ── MANPOWER ── */
+.man-row { display:flex; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
+.man-cell { flex:1; text-align:center; padding:10px 6px; border-right:1.5px solid var(--charcoal); background:white; }
+.man-cell:last-child { border-right:none; }
+.man-cell:nth-child(1) { background:var(--teal); color:white; }
+.man-cell:nth-child(2) { background:var(--amber); color:var(--charcoal); }
+.man-cell:nth-child(3) { background:var(--olive); color:white; }
+.man-cell .mc-num  { font-size:22px; font-weight:800; line-height:1; }
+.man-cell .mc-role { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-top:3px; opacity:.85; }
+
+/* ── ISSUE ── */
+.issue-box { border:2px solid var(--coral); background:white; overflow:hidden; margin-bottom:12px; }
+.issue-box-hd { background:var(--coral); color:white; padding:7px 12px; font-size:10px; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
+.issue-box-body { padding:12px; font-size:12px; line-height:1.7; }
+.issue-box-body strong { font-weight:700; }
+.no-issue { border:2px solid var(--olive); background:white; padding:10px 14px; display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; color:var(--olive); text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px; }
+
+/* ── STEPS (Work Steps style) ── */
+.steps-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
+.step-item { padding:10px 14px; border-right:1.5px solid var(--charcoal); border-bottom:1.5px solid var(--charcoal); background:white; }
+.step-item:nth-child(even) { border-right:none; }
+.step-item:nth-last-child(-n+2) { border-bottom:none; }
+.step-num { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--teal); margin-bottom:4px; }
+.step-val { font-size:12px; font-weight:500; line-height:1.5; }
+
+/* ── PHOTOS ── */
+.photo-grid-pdf { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+.photo-grid-pdf img { width:100%; aspect-ratio:4/3; object-fit:cover; border:1.5px solid var(--charcoal); display:block; }
+
+/* ── SIGNATURES ── */
+.sig-row { display:flex; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
+.sig-cell { flex:1; text-align:center; padding:10px 6px 14px; border-right:1.5px solid var(--charcoal); background:white; }
+.sig-cell:last-child { border-right:none; }
+.sig-cell .sc-role { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-md); margin-bottom:24px; display:block; }
+.sig-cell .sc-line { border-top:1.5px solid var(--charcoal); margin:0 10px 6px; }
+.sig-cell .sc-name { font-size:10px; font-weight:700; color:var(--charcoal); }
+
+/* ── FOOTER ── */
+.pdf-footer {
+  background:var(--charcoal); color:rgba(255,255,255,.6);
+  padding:8px 28px; display:flex; justify-content:space-between; align-items:center;
+  font-size:9px;
+}
+.pdf-footer strong { color:white; }
+
+@media print {
+  body  { background:var(--cream); }
+  .page { padding:0; }
+  .sec-hd { break-after:avoid; }
+}
 </style></head><body>
 <div class="page">
 
-  <div class="hdr">
-    <h1>📋 DAILY PROGRESS REPORT / รายงานความคืบหน้าประจำวัน</h1>
-    <p>TPS-SC Consortium · CHQ Data Center / Amata City (Rayong) · Generated: ${new Date(data.generatedAt).toLocaleString('th-TH')}</p>
-  </div>
-
-  <div class="meta-row">
-    <span class="meta-pill">📅 ${esc(dateLabel)}</span>
-    <span class="meta-pill">📋 สัญญาที่ ${esc(data.contract)}</span>
-    <span class="meta-pill">📍 ${esc(data.zone)||'—'}</span>
-    <span class="meta-pill">⏰ ${esc(data.timeStart)||'—'} – ${esc(data.timeEnd)||'—'}</span>
-    <span class="meta-pill">👤 ${esc(data.preparedBy)||'—'}</span>
-  </div>
-
-  <!-- Section 1 -->
-  <div class="section">
-    <div class="sec-title">📝 1. ข้อมูลทั่วไป / General Information</div>
-    <div class="grid2" style="margin-bottom:8px">
-      <div class="field-box"><div class="lbl">ทีมรับผิดชอบ</div><div class="val">${esc(data.team)||'—'}</div></div>
-      <div class="field-box"><div class="lbl">ประเภทงาน</div><div class="val">${esc(data.workTypes?.join(', '))||'—'}</div></div>
+  <!-- HEADER -->
+  <div class="pdf-header">
+    <div class="pdf-header-left">
+      <div class="org-name">TPS-SC Consortium · CHQ Data Center / Amata City (Rayong)</div>
+      <div class="doc-title-big">DAILY<br>REPORT</div>
+      <div class="doc-title-sub">รายงานความคืบหน้าประจำวัน</div>
     </div>
-    <div class="field-box" style="margin-bottom:8px"><div class="lbl">กิจกรรมวันนี้ / Today's Activities</div><div class="val" style="line-height:1.6">${esc(data.activity)||'—'}</div></div>
-    <div class="grid2">
-      <div class="field-box"><div class="lbl">เอกสารอ้างอิง</div><div class="val">${esc(data.docRef)||'—'}</div></div>
-      <div class="field-box"><div class="lbl">Site Coordination</div><div class="val">${esc(data.siteCoord?.join(', '))||'—'}</div></div>
+    <div class="pdf-header-geo">
+      <div class="geo-cell c1"></div>
+      <div class="geo-cell c2"></div>
+      <div class="geo-cell c3"></div>
+      <div class="geo-cell c4"></div>
     </div>
   </div>
 
-  <!-- Section 2 -->
-  <div class="section">
-    <div class="sec-title">✅ 2. Daily Readiness Checklist</div>
-    <table class="ck-table">${ckRows}</table>
-    ${data.checklistRemark ? `<div class="field-box" style="margin-top:8px"><div class="lbl">หมายเหตุ</div><div class="val">${data.checklistRemark}</div></div>` : ''}
+  <!-- META BAR -->
+  <div class="meta-bar">
+    <div class="meta-item"><div class="mi-label">วันที่</div><div class="mi-val">${esc(dateLabel)}</div></div>
+    <div class="meta-item"><div class="mi-label">สัญญา</div><div class="mi-val">${esc(data.contract)}</div></div>
+    <div class="meta-item"><div class="mi-label">Zone / Area</div><div class="mi-val">${esc(data.zone)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-label">เวลา</div><div class="mi-val">${esc(data.timeStart)||'—'} – ${esc(data.timeEnd)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-label">Prepared By</div><div class="mi-val">${esc(data.preparedBy)||'—'}</div></div>
   </div>
 
-  <!-- Section 3 -->
-  <div class="section">
-    <div class="sec-title">📊 3. ความคืบหน้า / Progress Today</div>
-    <div class="prog-row">
-      <div class="prog-box"><div style="font-size:10px;color:#8892A4;margin-bottom:4px">% วันนี้</div><div class="prog-num">${esc(data.pctDay)||0}%</div></div>
-      <div class="prog-box prog-cum"><div style="font-size:10px;color:#8892A4;margin-bottom:4px">% สะสม</div><div class="prog-num">${esc(data.pctCum)||0}%</div></div>
-    </div>
-    <div class="grid2" style="margin-bottom:8px">
-      <div class="field-box"><div class="lbl">ปริมาณงานวันนี้</div><div class="val">${esc(data.qtyToday)||'—'}</div></div>
-      <div class="field-box"><div class="lbl">ปริมาณงานสะสม</div><div class="val">${esc(data.qtyCum)||'—'}</div></div>
-    </div>
-    <div class="field-box" style="margin-bottom:8px">
-      <div class="lbl">กำลังคน</div>
-      <div class="val">Safety ${esc(data.manSafety)||0} · Supervisor ${esc(data.manSuper)||0} · Skilled ${esc(data.manSkilled)||0}${data.manOther?` · ${esc(data.manOther)}`:''}</div>
-    </div>
-    <div class="grid2">
-      <div class="field-box"><div class="lbl">เครื่องจักร / อุปกรณ์</div><div class="val" style="line-height:1.5">${esc(data.equipment)||'—'}</div></div>
-      <div class="field-box"><div class="lbl">วัสดุ / Material</div><div class="val">${esc(data.material)||'—'}</div></div>
-    </div>
-  </div>
+  <div class="pdf-body">
 
-  <!-- Section 4 -->
-  <div class="section">
-    <div class="sec-title">⚠️ 4. ปัญหา / อุปสรรค / Issues & Actions</div>
-    ${issueSection}
-    ${data.miscNote ? `<div class="field-box" style="margin-top:8px"><div class="lbl">Miscellaneous</div><div class="val">${esc(data.miscNote)}</div></div>` : ''}
-  </div>
-
-  <!-- Section 5 -->
-  <div class="section">
-    <div class="sec-title">🔭 5. แผนพรุ่งนี้ / Tomorrow's Plan</div>
-    <div class="field-box" style="margin-bottom:8px"><div class="lbl">แผนงาน</div><div class="val" style="line-height:1.6">${esc(data.tmrPlan)||'—'}</div></div>
-    <div class="grid2">
-      <div class="field-box"><div class="lbl">เป้าหมายปริมาณงาน</div><div class="val">${esc(data.tmrTarget)||'—'}</div></div>
-      <div class="field-box"><div class="lbl">หมายเหตุพิเศษ</div><div class="val">${esc(data.tmrNote)||'—'}</div></div>
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <div class="kpi-cell bg-teal">
+        <div class="kc-num">${pctDayNum}%</div>
+        <div class="kc-lbl">Progress Today</div>
+      </div>
+      <div class="kpi-cell bg-amber">
+        <div class="kc-num">${pctCumNum}%</div>
+        <div class="kc-lbl">Cumulative</div>
+      </div>
+      <div class="kpi-cell bg-coral">
+        <div class="kc-num">${manTotal}</div>
+        <div class="kc-lbl">Total Manpower</div>
+      </div>
+      <div class="kpi-cell bg-olive">
+        <div class="kc-num" style="font-size:14px;padding-top:4px">${data.hasIssue ? 'ISSUE' : 'CLEAR'}</div>
+        <div class="kc-lbl">Site Status</div>
+      </div>
     </div>
-  </div>
 
-  <!-- Signatures -->
-  <div class="section">
-    <div class="sec-title">📷 6. ภาพประกอบ / Progress Photos</div>
-    ${data.photos && data.photos.length
-      ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${
-          data.photos.map(src =>
-            `<img src="${src}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid #E8ECF4">`
-          ).join('')
-        }</div>`
-      : `<div style="color:#8892A4;font-size:12px;padding:8px 0">ไม่มีภาพประกอบ</div>`
+    <!-- GENERAL INFO -->
+    <div class="sec-hd sec-hd-teal"><span class="sh-label">1. ข้อมูลทั่วไป / <em>General Information</em></span></div>
+    <table class="info-table">
+      <tr><td>ทีมรับผิดชอบ</td><td>${esc(data.team)||'—'}</td></tr>
+      <tr><td>ประเภทงาน</td><td>${esc(data.workTypes?.join(', '))||'—'}</td></tr>
+      <tr><td>กิจกรรมวันนี้<br>Today's Activities</td><td>${esc(data.activity)||'—'}</td></tr>
+      <tr><td>เอกสารอ้างอิง</td><td>${esc(data.docRef)||'—'}</td></tr>
+      <tr><td>Site Coordination</td><td>${esc(data.siteCoord?.join(', '))||'—'}</td></tr>
+    </table>
+
+    <!-- CHECKLIST -->
+    <div class="sec-hd sec-hd-coral"><span class="sh-label">2. Daily Readiness <em>Checklist</em></span></div>
+    <div class="ck-list">
+      ${CK_ITEMS.map(item => {
+        const st  = data.checklist?.[item.id] || 'ready';
+        const cls = st==='ready'?'ck-ready':st==='notready'?'ck-notready':'ck-na';
+        const lbl = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
+        return `<div class="ck-item"><span class="ck-name">${item.label}</span><span class="ck-badge ${cls}">${lbl}</span></div>`;
+      }).join('')}
+    </div>
+    ${data.checklistRemark ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">หมายเหตุ</div><div class="panel-body">${esc(data.checklistRemark)}</div></div>` : ''}
+
+    <!-- PROGRESS -->
+    <div class="sec-hd sec-hd-amber"><span class="sh-label">3. ความคืบหน้า / <em>Progress Today</em></span></div>
+    <div class="prog-section">
+      <div class="prog-item">
+        <span class="prog-label">Progress Today</span>
+        <div class="prog-track"><div class="prog-fill fill-teal" style="width:${pctDayNum}%"></div></div>
+        <span class="prog-val">${pctDayNum}%</span>
+      </div>
+      <div class="prog-item">
+        <span class="prog-label">Cumulative</span>
+        <div class="prog-track"><div class="prog-fill fill-amber" style="width:${pctCumNum}%"></div></div>
+        <span class="prog-val">${pctCumNum}%</span>
+      </div>
+    </div>
+    <div class="man-row">
+      <div class="man-cell"><div class="mc-num">${esc(data.manSafety)||0}</div><div class="mc-role">Safety</div></div>
+      <div class="man-cell"><div class="mc-num">${esc(data.manSuper)||0}</div><div class="mc-role">Supervisor</div></div>
+      <div class="man-cell"><div class="mc-num">${esc(data.manSkilled)||0}</div><div class="mc-role">Skilled</div></div>
+      ${data.manOther ? `<div class="man-cell" style="background:var(--blush)"><div class="mc-num" style="font-size:14px">${esc(data.manOther)}</div><div class="mc-role">Other</div></div>` : ''}
+    </div>
+    <div class="two-col">
+      <div class="panel"><div class="panel-hd ph-teal">เครื่องจักร / Equipment</div><div class="panel-body">${esc(data.equipment)||'—'}</div></div>
+      <div class="panel"><div class="panel-hd ph-olive">วัสดุ / Material</div><div class="panel-body">${esc(data.material)||'—'}</div></div>
+    </div>
+    <div class="two-col" style="margin-bottom:0">
+      <div class="panel"><div class="panel-hd">ปริมาณงานวันนี้</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyToday)||'—'}</div></div>
+      <div class="panel"><div class="panel-hd ph-coral">ปริมาณงานสะสม</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="sec-hd" style="margin-top:18px"><span class="sh-label">4. ปัญหา / อุปสรรค / <em style="color:var(--amber)">Issues & Actions</em></span></div>
+    ${data.hasIssue
+      ? `<div class="issue-box">
+           <div class="issue-box-hd">⚠ มีปัญหา / Issue Detected &nbsp;·&nbsp; ระดับ: ${esc(data.issueSeverity)||'—'}</div>
+           <div class="issue-box-body">
+             <div style="margin-bottom:6px"><strong>รายละเอียด / Description:</strong><br>${esc(data.issueDesc)||'—'}</div>
+             <div><strong>แนวทางแก้ไข / Corrective Action:</strong><br>${esc(data.issueAction)||'—'}</div>
+           </div>
+         </div>`
+      : `<div class="no-issue">✓ ไม่มีปัญหา / No Issues Reported</div>`
     }
-  </div>
+    ${data.miscNote ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">Miscellaneous</div><div class="panel-body">${esc(data.miscNote)}</div></div>` : ''}
 
-  <!-- Signatures -->
-  <div class="section">
-    <div class="sec-title">✍️ ลายเซ็นผู้รับรอง / Approval Signatures</div>
-    <div class="sig-grid">
-      <div class="sig-box"><div class="role">ผู้จัดทำ / Prepared By</div><div class="name">${esc(data.sig1)||'—'}</div></div>
-      <div class="sig-box"><div class="role">ผู้ควบคุมงานทีม / Supervisor</div><div class="name">${esc(data.sig2)||'—'}</div></div>
-      <div class="sig-box"><div class="role">Safety Supervisor</div><div class="name">${esc(data.sig3)||'—'}</div></div>
-      <div class="sig-box"><div class="role">ผู้ควบคุม TPS-SC</div><div class="name">${esc(data.sig4)||'—'}</div></div>
+    <!-- TOMORROW -->
+    <div class="sec-hd sec-hd-olive"><span class="sh-label">5. แผนพรุ่งนี้ / <em style="color:var(--amber)">Tomorrow's Plan</em></span></div>
+    <div class="steps-grid">
+      <div class="step-item"><div class="step-num">แผนงาน / Plan</div><div class="step-val">${esc(data.tmrPlan)||'—'}</div></div>
+      <div class="step-item"><div class="step-num">เป้าหมายปริมาณงาน</div><div class="step-val">${esc(data.tmrTarget)||'—'}</div></div>
+      <div class="step-item" style="border-bottom:none"><div class="step-num">หมายเหตุพิเศษ</div><div class="step-val">${esc(data.tmrNote)||'—'}</div></div>
+      <div class="step-item" style="border-bottom:none;background:var(--gray-lt)"></div>
     </div>
+
+    <!-- PHOTOS -->
+    ${data.photos && data.photos.length ? `
+    <div class="sec-hd sec-hd-coral"><span class="sh-label">6. ภาพประกอบ / <em>Progress Photos</em></span></div>
+    <div class="photo-grid-pdf">
+      ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
+    </div>` : ''}
+
+    <!-- SIGNATURES -->
+    <div class="sec-hd" style="background:var(--charcoal)"><span class="sh-label">ลายเซ็นผู้รับรอง / <em style="color:var(--amber)">Approval Signatures</em></span></div>
+    <div class="sig-row">
+      <div class="sig-cell"><span class="sc-role">ผู้จัดทำ / Prepared By</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig1)||'—'}</div></div>
+      <div class="sig-cell"><span class="sc-role">ผู้ควบคุมงานทีม / Supervisor</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig2)||'—'}</div></div>
+      <div class="sig-cell"><span class="sc-role">Safety Supervisor</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig3)||'—'}</div></div>
+      <div class="sig-cell"><span class="sc-role">ผู้ควบคุม TPS-SC</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig4)||'—'}</div></div>
+    </div>
+
+  </div><!-- /pdf-body -->
+
+  <!-- FOOTER -->
+  <div class="pdf-footer">
+    <div><strong>TPS-SC Consortium</strong> · CHQ Data Center / Amata City (Rayong) · สัญญาที่ ${esc(data.contract)}</div>
+    <div>Generated: ${new Date(data.generatedAt).toLocaleString('th-TH')}</div>
   </div>
 
-  <div class="footer">Daily Progress Report | TPS-SC Consortium | สัญญาที่ ${esc(data.contract)} — CHQ Data Center / Amata City (Rayong) | ${new Date(data.generatedAt).toLocaleString('th-TH')}</div>
 </div>
 <script>window.onload=()=>{ setTimeout(()=>window.print(), 400); }<\/script>
 <!-- NOTE: window.onload above is scoped to the PDF popup window (win.document.write),
