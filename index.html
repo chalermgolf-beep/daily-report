@@ -1545,6 +1545,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 
 /* ── BODY ── */
 .pdf-body { padding: 20px 28px 24px; }
+.pdf-section { break-inside:avoid; page-break-inside:avoid; margin-bottom:0; }
 
 /* ── KPI ROW ── */
 .kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:20px; border:2px solid var(--charcoal); border-radius:0; overflow:hidden; }
@@ -1655,7 +1656,29 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 @media print {
   body  { background:var(--cream); }
   .page { padding:0; }
-  .sec-hd { break-after:avoid; }
+
+  /* ── PAGE BREAK CONTROL ── */
+  .sec-hd          { break-after:avoid; page-break-after:avoid; }
+  .info-table      { break-inside:avoid; page-break-inside:avoid; }
+  .ck-list         { break-inside:avoid; page-break-inside:avoid; }
+  .prog-section    { break-inside:avoid; page-break-inside:avoid; }
+  .man-row         { break-inside:avoid; page-break-inside:avoid; }
+  .two-col         { break-inside:avoid; page-break-inside:avoid; }
+  .steps-grid      { break-inside:avoid; page-break-inside:avoid; }
+  .issue-box       { break-inside:avoid; page-break-inside:avoid; }
+  .no-issue        { break-inside:avoid; page-break-inside:avoid; }
+  .sig-row         { break-inside:avoid; page-break-inside:avoid; }
+  .kpi-row         { break-inside:avoid; page-break-inside:avoid; }
+  .photo-grid-pdf  { break-inside:avoid; page-break-inside:avoid; }
+  .panel           { break-inside:avoid; page-break-inside:avoid; }
+  .pdf-footer      { break-inside:avoid; page-break-inside:avoid; }
+
+  /* Keep section header with its first content block */
+  .sec-hd + *      { break-before:avoid; page-break-before:avoid; }
+
+  /* Prevent single orphan rows */
+  .ck-item         { break-inside:avoid; page-break-inside:avoid; }
+  tr               { break-inside:avoid; page-break-inside:avoid; }
 }
 </style></head><body>
 <div class="page">
@@ -1707,6 +1730,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
     </div>
 
     <!-- GENERAL INFO -->
+    <div class="pdf-section">
     <div class="sec-hd sec-hd-teal"><span class="sh-label">1. ข้อมูลทั่วไป / <em>General Information</em></span></div>
     <table class="info-table">
       <tr><td>ทีมรับผิดชอบ</td><td>${esc(data.team)||'—'}</td></tr>
@@ -1716,7 +1740,10 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
       <tr><td>Site Coordination</td><td>${esc(data.siteCoord?.join(', '))||'—'}</td></tr>
     </table>
 
+    </div><!-- /pdf-section -->
+
     <!-- CHECKLIST -->
+    <div class="pdf-section">
     <div class="sec-hd sec-hd-coral"><span class="sh-label">2. Daily Readiness <em>Checklist</em></span></div>
     <div class="ck-list">
       ${CK_ITEMS.map(item => {
@@ -1728,7 +1755,10 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
     </div>
     ${data.checklistRemark ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">หมายเหตุ</div><div class="panel-body">${esc(data.checklistRemark)}</div></div>` : ''}
 
+    </div><!-- /pdf-section -->
+
     <!-- PROGRESS -->
+    <div class="pdf-section">
     <div class="sec-hd sec-hd-amber"><span class="sh-label">3. ความคืบหน้า / <em>Progress Today</em></span></div>
     <div class="prog-section">
       <div class="prog-item">
@@ -1757,8 +1787,11 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
       <div class="panel"><div class="panel-hd ph-coral">ปริมาณงานสะสม</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
     </div>
 
+    </div><!-- /pdf-section -->
+
     <!-- ISSUES -->
-    <div class="sec-hd" style="margin-top:18px"><span class="sh-label">4. ปัญหา / อุปสรรค / <em style="color:var(--amber)">Issues & Actions</em></span></div>
+    <div class="pdf-section">
+    <div class="sec-hd" style="margin-top:0"><span class="sh-label">4. ปัญหา / อุปสรรค / <em style="color:var(--amber)">Issues & Actions</em></span></div>
     ${data.hasIssue
       ? `<div class="issue-box">
            <div class="issue-box-hd">⚠ มีปัญหา / Issue Detected &nbsp;·&nbsp; ระดับ: ${esc(data.issueSeverity)||'—'}</div>
@@ -1771,7 +1804,10 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
     }
     ${data.miscNote ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">Miscellaneous</div><div class="panel-body">${esc(data.miscNote)}</div></div>` : ''}
 
+    </div><!-- /pdf-section -->
+
     <!-- TOMORROW -->
+    <div class="pdf-section">
     <div class="sec-hd sec-hd-olive"><span class="sh-label">5. แผนพรุ่งนี้ / <em style="color:var(--amber)">Tomorrow's Plan</em></span></div>
     <div class="steps-grid">
       <div class="step-item"><div class="step-num">แผนงาน / Plan</div><div class="step-val">${esc(data.tmrPlan)||'—'}</div></div>
@@ -1782,12 +1818,16 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 
     <!-- PHOTOS -->
     ${data.photos && data.photos.length ? `
+    <div class="pdf-section">
     <div class="sec-hd sec-hd-coral"><span class="sh-label">6. ภาพประกอบ / <em>Progress Photos</em></span></div>
     <div class="photo-grid-pdf">
       ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
     </div>` : ''}
 
+    </div><!-- /pdf-section -->
+
     <!-- SIGNATURES -->
+    <div class="pdf-section">
     <div class="sec-hd" style="background:var(--charcoal)"><span class="sh-label">ลายเซ็นผู้รับรอง / <em style="color:var(--amber)">Approval Signatures</em></span></div>
     <div class="sig-row">
       <div class="sig-cell"><span class="sc-role">ผู้จัดทำ / Prepared By</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig1)||'—'}</div></div>
@@ -1796,6 +1836,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
       <div class="sig-cell"><span class="sc-role">ผู้ควบคุม TPS-SC</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig4)||'—'}</div></div>
     </div>
 
+    </div><!-- /pdf-section -->
   </div><!-- /pdf-body -->
 
   <!-- FOOTER -->
