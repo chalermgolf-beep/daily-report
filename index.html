@@ -1380,7 +1380,7 @@ input[type=range] {
 
 <script>
 /* ── GOOGLE APPS SCRIPT URL ── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbygCZO7pI38jaDyrVGy8qju7s58gMu1h3eCVO4o3dtfMuS07lNf5AcU3e3J4iis1oC00g/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxoaanegEPiXN4OftOCehv1Y_QPBnN4sKDqSHi9EXtLhSWnNx9hHYkBvHjGRb7yfi8m4g/exec';
 
 /* ── XSS ESCAPE HELPER ── */
 function esc(str) {
@@ -2373,25 +2373,31 @@ async function renderWellDashboard() {
   const local = loadWellData() || { done:0, todayAdded:0, lastUpdate:null, lastDate:null };
   updateWellUI(local.done||0, local.todayAdded||0, local.lastUpdate, local.lastDate);
 
-  // Then fetch latest from Google Sheets
+  // Fetch from Google Sheets via JSONP (bypasses CORS)
   if (GAS_URL) {
-    try {
-      const res  = await fetch(GAS_URL + '?t=' + Date.now());
-      const json = await res.json();
-      if (json.status === 'ok' && json.wellDone >= (local.done||0)) {
-        // Update local cache if sheet has newer/higher value
-        const merged = {
-          done: json.wellDone,
-          todayAdded: local.todayAdded || 0,
-          lastUpdate: local.lastUpdate || new Date().toISOString(),
-          lastDate: local.lastDate || new Date().toDateString(),
-        };
-        saveWellData(merged);
-        updateWellUI(merged.done, merged.todayAdded, merged.lastUpdate, merged.lastDate);
-      }
-    } catch(e) {
-      console.warn('Could not fetch from Sheets:', e);
-    }
+    const cbName = 'gasCallback_' + Date.now();
+    const script = document.createElement('script');
+    script.src = GAS_URL + '?callback=' + cbName + '&t=' + Date.now();
+
+    window[cbName] = (json) => {
+      try {
+        if (json.status === 'ok' && json.wellDone >= (local.done||0)) {
+          const merged = {
+            done: json.wellDone,
+            todayAdded: local.todayAdded || 0,
+            lastUpdate: local.lastUpdate || new Date().toISOString(),
+            lastDate: local.lastDate || new Date().toDateString(),
+          };
+          saveWellData(merged);
+          updateWellUI(merged.done, merged.todayAdded, merged.lastUpdate, merged.lastDate);
+        }
+      } catch(e) { console.warn('JSONP parse error:', e); }
+      delete window[cbName];
+      script.remove();
+    };
+
+    script.onerror = () => { delete window[cbName]; script.remove(); };
+    document.head.appendChild(script);
   }
 }
 
