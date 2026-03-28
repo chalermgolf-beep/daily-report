@@ -1404,6 +1404,7 @@ function collectData() {
     sig2: document.getElementById('sig2').value,
     sig3: document.getElementById('sig3').value,
     sig4: document.getElementById('sig4').value,
+    photos: [...document.querySelectorAll('#photoGrid .photo-thumb img')].map(img => img.src),
   };
 }
 
@@ -1577,6 +1578,19 @@ function generatePDF(data) {
       <div class="field-box"><div class="lbl">เป้าหมายปริมาณงาน</div><div class="val">${esc(data.tmrTarget)||'—'}</div></div>
       <div class="field-box"><div class="lbl">หมายเหตุพิเศษ</div><div class="val">${esc(data.tmrNote)||'—'}</div></div>
     </div>
+  </div>
+
+  <!-- Signatures -->
+  <div class="section">
+    <div class="sec-title">📷 6. ภาพประกอบ / Progress Photos</div>
+    ${data.photos && data.photos.length
+      ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${
+          data.photos.map(src =>
+            `<img src="${src}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;border:1px solid #E8ECF4">`
+          ).join('')
+        }</div>`
+      : `<div style="color:#8892A4;font-size:12px;padding:8px 0">ไม่มีภาพประกอบ</div>`
+    }
   </div>
 
   <!-- Signatures -->
