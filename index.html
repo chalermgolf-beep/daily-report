@@ -1716,19 +1716,19 @@ function generatePDF(data) {
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --teal:    #0D2B5E;
-  --teal-dk: #081D42;
-  --coral:   #C0392B;
-  --amber:   #E67E22;
-  --olive:   #F1C40F;
-  --blush:   #E8B4A0;
-  --charcoal:#1A1A2E;
-  --cream:   #F4F6FA;
+  --teal:    #7B2D00;
+  --teal-dk: #5A1E00;
+  --coral:   #E8833A;
+  --amber:   #F9C846;
+  --olive:   #5CC8C8;
+  --blush:   #FFAD8A;
+  --charcoal:#2C1810;
+  --cream:   #FFF8F2;
   --white:   #FFFFFF;
-  --gray-lt: #EEF1F8;
-  --gray-bd: #CDD3E0;
-  --gray-md: #8892A4;
-  --text:    #1A1A2E;
+  --gray-lt: #FFF0E6;
+  --gray-bd: #E8C9B0;
+  --gray-md: #A07060;
+  --text:    #2C1810;
 }
 * { box-sizing:border-box; margin:0; padding:0; }
 html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -1770,15 +1770,15 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
   min-height: 70px;
 }
 .geo-cell { width:70px; height:55px; position:relative; overflow:hidden; }
-.geo-cell.c1 { background:#C0392B; }
-.geo-cell.c2 { background:#E67E22; }
-.geo-cell.c3 { background:#F1C40F; }
-.geo-cell.c4 { background:#E8B4A0; }
+.geo-cell.c1 { background:#E8833A; }
+.geo-cell.c2 { background:#F9C846; }
+.geo-cell.c3 { background:#5CC8C8; }
+.geo-cell.c4 { background:#FFAD8A; }
 /* Bauhaus quarter-circle shapes */
-.geo-cell.c1::after { content:''; position:absolute; width:100px; height:100px; background:#081D42; border-radius:50%; bottom:-50px; right:-50px; }
-.geo-cell.c2::after { content:''; position:absolute; width:80px; height:80px; background:#C0392B; border-radius:50%; top:-40px; left:-40px; }
-.geo-cell.c3::after { content:''; position:absolute; width:60px; height:60px; background:#0D2B5E; border-radius:50%; top:-30px; right:-30px; }
-.geo-cell.c4::after { content:''; position:absolute; width:90px; height:90px; background:#E67E22; border-radius:50%; bottom:-45px; left:-45px; }
+.geo-cell.c1::after { content:''; position:absolute; width:100px; height:100px; background:#5A1E00; border-radius:50%; bottom:-50px; right:-50px; }
+.geo-cell.c2::after { content:''; position:absolute; width:80px; height:80px; background:#E8833A; border-radius:50%; top:-40px; left:-40px; }
+.geo-cell.c3::after { content:''; position:absolute; width:60px; height:60px; background:#F9C846; border-radius:50%; top:-30px; right:-30px; }
+.geo-cell.c4::after { content:''; position:absolute; width:90px; height:90px; background:#5CC8C8; border-radius:50%; bottom:-45px; left:-45px; }
 
 /* ── META INFO BAR ── */
 .meta-bar {
@@ -1831,7 +1831,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 /* ── TWO COL ── */
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
 .panel { border:1.5px solid var(--charcoal); background:white; overflow:hidden; }
-.panel-hd { background:var(--amber); color:var(--charcoal); padding:6px 12px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+.panel-hd { background:var(--coral); color:white; padding:6px 12px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
 .panel-hd.ph-teal { background:var(--teal); color:white; }
 .panel-hd.ph-coral { background:var(--coral); color:white; }
 .panel-hd.ph-olive { background:var(--olive); color:white; }
@@ -1855,7 +1855,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 .prog-track { flex:1; height:16px; background:var(--gray-lt); border:1.5px solid var(--charcoal); overflow:hidden; }
 .prog-fill  { height:100%; }
 .fill-teal  { background:var(--teal); }
-.fill-amber { background:var(--amber); }
+.fill-amber { background:var(--coral); }
 .prog-val   { font-size:13px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
 
 /* ── MANPOWER ── */
@@ -1897,7 +1897,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 
 /* ── FOOTER ── */
 .pdf-footer {
-  background:var(--charcoal); color:rgba(255,255,255,.6);
+  background:#5A1E00; color:rgba(255,255,255,.6);
   padding:8px 28px; display:flex; justify-content:space-between; align-items:center;
   font-size:9px;
 }
@@ -1961,19 +1961,19 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 
     <!-- KPI ROW -->
     <div class="kpi-row">
-      <div class="kpi-cell" style="background:#0D2B5E;color:white">
+      <div class="kpi-cell" style="background:#7B2D00;color:white">
         <div class="kc-num">${pctDayNum}%</div>
         <div class="kc-lbl">Progress Today</div>
       </div>
-      <div class="kpi-cell" style="background:#C0392B;color:white">
+      <div class="kpi-cell" style="background:#E8833A;color:white">
         <div class="kc-num">${pctCumNum}%</div>
         <div class="kc-lbl">Cumulative</div>
       </div>
-      <div class="kpi-cell" style="background:#E67E22;color:white">
+      <div class="kpi-cell" style="background:#F9C846;color:#4A3200">
         <div class="kc-num">${manTotal}</div>
         <div class="kc-lbl">Total Manpower</div>
       </div>
-      <div class="kpi-cell" style="background:#F1C40F;color:#1A1A2E">
+      <div class="kpi-cell" style="background:#5CC8C8;color:#003A3A">
         <div class="kc-num" style="font-size:14px;padding-top:4px">${data.hasIssue ? 'ISSUE' : 'CLEAR'}</div>
         <div class="kc-lbl">Site Status</div>
       </div>
@@ -2411,11 +2411,10 @@ function toggleWellEdit() {
   btn.textContent = isEdit ? '✏️ อัปเดต' : '✕ ยกเลิก';
 }
 
-function saveWellProgress() {
+async function saveWellProgress() {
   const inputDone  = parseInt(document.getElementById('wdInputDone').value)  || 0;
   const inputToday = parseInt(document.getElementById('wdInputToday').value) || 0;
 
-  // If today field filled, add to existing done count
   const d = loadWellData() || { done: 0 };
   let newDone = inputDone;
   if (inputToday > 0) {
@@ -2438,7 +2437,29 @@ function saveWellProgress() {
   document.getElementById('wellViewMode').style.display = 'block';
   document.querySelector('.wd-edit-btn').textContent = '✏️ อัปเดต';
 
-  showToast(`✅ อัปเดตแล้ว — เสร็จ ${newDone}/${WELL_TOTAL} บ่อ (${Math.round(newDone/WELL_TOTAL*100)}%)`, 'success');
+  showToast('⏳ กำลังส่งข้อมูลไป Server...', '');
+
+  // Send wellDone to Google Sheet via Apps Script
+  if (GAS_URL) {
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wellDone: newDone,
+          wellToday: newData.todayAdded,
+          date: new Date().toISOString().split('T')[0],
+          _type: 'wellUpdate'  // flag ว่าเป็น well update ไม่ใช่ report
+        }),
+      });
+      showToast(`✅ อัปเดตแล้ว — เสร็จ ${newDone}/${WELL_TOTAL} บ่อ (${Math.round(newDone/WELL_TOTAL*100)}%) · Synced ☁️`, 'success');
+    } catch(e) {
+      showToast(`✅ บันทึกในเครื่องแล้ว (ไม่มี internet)`, 'success');
+    }
+  } else {
+    showToast(`✅ อัปเดตแล้ว — เสร็จ ${newDone}/${WELL_TOTAL} บ่อ`, 'success');
+  }
 }
 
 /* ── INIT ── */
@@ -2447,6 +2468,11 @@ window.onload = () => {
   buildChecklist();
   goSection(0);
   renderWellDashboard();
+
+  // Auto-refresh well dashboard every 30 seconds
+  setInterval(() => {
+    renderWellDashboard();
+  }, 30000);
   // pre-open issue detail since there's a sample issue
   document.getElementById('issueToggle').checked = true;
   document.getElementById('issueDetail').classList.add('open');
