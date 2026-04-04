@@ -2047,12 +2047,6 @@ function copyToClipboard() {
 async function submitReport() {
   showToast('⏳ กำลังบันทึก...', '');
   const data = collectData();
-
-  // Add well progress to report data
-  const wellData = loadWellData() || { done: 0, todayAdded: 0 };
-  data.wellDone  = wellData.done || 0;
-  data.wellToday = wellData.todayAdded || 0;
-
   saveToLocal(data);
 
   // Send to Google Sheets (non-blocking)
