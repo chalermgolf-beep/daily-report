@@ -567,145 +567,6 @@ input[type=range] {
   box-shadow: 0 2px 8px rgba(26,111,212,.3);
 }
 
-/* ── WELL DASHBOARD ── */
-.well-dashboard {
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-  margin-bottom: 16px;
-  animation: slideUp .25s ease;
-}
-.wd-header {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
-  padding: 14px 18px;
-  display: flex; align-items: center; gap: 10px;
-}
-.wd-header .wd-icon {
-  width: 36px; height: 36px;
-  background: rgba(255,255,255,.15);
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
-}
-.wd-header h2 { font-size: 14px; font-weight: 700; color: white; }
-.wd-header p  { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 1px; }
-.wd-header .wd-edit-btn {
-  margin-left: auto;
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 11px; font-weight: 600;
-  color: white; cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap; flex-shrink: 0;
-}
-.wd-body { padding: 16px 18px; }
-
-/* Big counter */
-.wd-counter-row {
-  display: flex; gap: 10px; margin-bottom: 14px;
-}
-.wd-counter {
-  flex: 1; text-align: center;
-  padding: 14px 10px;
-  border-radius: var(--radius-md);
-}
-.wd-counter.done  { background: var(--green-soft); }
-.wd-counter.total { background: var(--gray-100); }
-.wd-counter.remain{ background: var(--orange-soft); }
-.wd-counter .wc-num {
-  font-size: 32px; font-weight: 700; line-height: 1;
-}
-.wd-counter.done  .wc-num { color: var(--green); }
-.wd-counter.total .wc-num { color: var(--navy); }
-.wd-counter.remain .wc-num { color: var(--orange); }
-.wd-counter .wc-label {
-  font-size: 10px; font-weight: 600;
-  color: var(--gray-500);
-  text-transform: uppercase; letter-spacing: .05em;
-  margin-top: 4px;
-}
-
-/* Progress bar */
-.wd-bar-wrap { margin-bottom: 10px; }
-.wd-bar-head {
-  display: flex; justify-content: space-between;
-  align-items: baseline; margin-bottom: 6px;
-}
-.wd-bar-label { font-size: 12px; font-weight: 600; color: var(--gray-700); }
-.wd-bar-pct   { font-size: 20px; font-weight: 700; color: var(--green); }
-.wd-bar-track {
-  height: 14px; background: var(--gray-200);
-  border-radius: 7px; overflow: hidden;
-}
-.wd-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--green), #00D994);
-  border-radius: 7px;
-  transition: width .6s cubic-bezier(.4,0,.2,1);
-  position: relative;
-}
-.wd-bar-fill::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.3) 50%, transparent 100%);
-  animation: shimmer 2s infinite;
-}
-@keyframes shimmer {
-  0%   { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-/* Input row */
-.wd-input-row {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-  margin-top: 14px; padding-top: 14px;
-  border-top: 1px solid var(--gray-200);
-}
-.wd-input-group { display: flex; flex-direction: column; gap: 4px; }
-.wd-input-group label {
-  font-size: 11px; font-weight: 600;
-  color: var(--gray-500); text-transform: uppercase; letter-spacing: .04em;
-}
-.wd-input-group input {
-  font-size: 20px; font-weight: 700;
-  text-align: center; color: var(--navy);
-  border: 2px solid var(--gray-200);
-  border-radius: var(--radius-sm);
-  padding: 10px 8px;
-  background: var(--gray-100);
-}
-.wd-input-group input:focus {
-  border-color: var(--blue);
-  background: white;
-  box-shadow: 0 0 0 3px rgba(26,111,212,.1);
-}
-.wd-save-btn {
-  width: 100%; margin-top: 10px;
-  padding: 13px;
-  background: linear-gradient(135deg, var(--green), #00A86B);
-  color: white; border: none; border-radius: var(--radius-sm);
-  font-family: inherit; font-size: 14px; font-weight: 700;
-  cursor: pointer; box-shadow: 0 4px 14px rgba(0,184,122,.35);
-  transition: .15s;
-}
-.wd-save-btn:active { transform: scale(.98); }
-
-/* Edit mode */
-.wd-view-mode, .wd-edit-mode { }
-.wd-edit-mode { display: none; }
-
-/* Today badge */
-.wd-today-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--blue); color: white;
-  border-radius: 20px; padding: 3px 10px;
-  font-size: 11px; font-weight: 600;
-  margin-top: 6px;
-}
-
 /* ── SUBMIT FOOTER ── */
 .submit-footer {
   position: fixed;
@@ -873,74 +734,6 @@ input[type=range] {
   </nav>
 </header>
 
-<div class="content" style="padding-top:16px;max-width:520px;margin:0 auto">
-
-<!-- ══ WELL PROGRESS DASHBOARD ══ -->
-<div class="well-dashboard" id="wellDashboard">
-  <div class="wd-header">
-    <div class="wd-icon">🕳️</div>
-    <div>
-      <h2>ความคืบหน้า — จำนวนบ่อ</h2>
-      <p>CHQ Data Center / Amata City · สัญญาที่ 1</p>
-    </div>
-    <button class="wd-edit-btn" onclick="toggleWellEdit()">✏️ อัปเดต</button>
-  </div>
-  <div class="wd-body">
-
-    <!-- VIEW MODE -->
-    <div class="wd-view-mode" id="wellViewMode">
-      <div class="wd-counter-row">
-        <div class="wd-counter done">
-          <div class="wc-num" id="wdDoneNum">0</div>
-          <div class="wc-label">เสร็จแล้ว</div>
-        </div>
-        <div class="wd-counter remain">
-          <div class="wc-num" id="wdRemainNum">157</div>
-          <div class="wc-label">คงเหลือ</div>
-        </div>
-        <div class="wd-counter total">
-          <div class="wc-num">157</div>
-          <div class="wc-label">ทั้งหมด</div>
-        </div>
-      </div>
-
-      <div class="wd-bar-wrap">
-        <div class="wd-bar-head">
-          <span class="wd-bar-label">ความคืบหน้าโครงการ</span>
-          <span class="wd-bar-pct" id="wdPct">0%</span>
-        </div>
-        <div class="wd-bar-track">
-          <div class="wd-bar-fill" id="wdBarFill" style="width:0%"></div>
-        </div>
-      </div>
-
-      <div style="font-size:11px;color:var(--gray-500);text-align:center">
-        อัปเดตล่าสุด: <span id="wdLastUpdate">—</span>
-        <span class="wd-today-badge" id="wdTodayBadge" style="display:none">+<span id="wdTodayNum">0</span> บ่อวันนี้</span>
-      </div>
-    </div>
-
-    <!-- EDIT MODE -->
-    <div class="wd-edit-mode" id="wellEditMode">
-      <div class="wd-input-row">
-        <div class="wd-input-group">
-          <label>✅ บ่อที่เสร็จแล้ว</label>
-          <input type="number" id="wdInputDone" min="0" max="157" placeholder="0">
-        </div>
-        <div class="wd-input-group">
-          <label>📅 เสร็จวันนี้ (เพิ่ม)</label>
-          <input type="number" id="wdInputToday" min="0" max="157" placeholder="0">
-        </div>
-      </div>
-      <button class="wd-save-btn" onclick="saveWellProgress()">💾 บันทึกความคืบหน้า</button>
-    </div>
-
-  </div>
-</div>
-<!-- ══ END DASHBOARD ══ -->
-
-</div>
-
 <div class="content" id="mainContent">
 
 <!-- ══════════════════════════════════════
@@ -997,9 +790,9 @@ input[type=range] {
           <select id="g_team">
             <option value="">— เลือกทีม —</option>
             <option selected>TPS - SC Consortium</option>
-            <option>Team A</option>
-            <option>Team B</option>
-            <option>Team C</option>
+            <option>PN</option>
+            <option>Kaper</option>
+            <option>Unity</option>
           </select>
         </div>
         <div class="field">
@@ -1142,40 +935,7 @@ input[type=range] {
         <input type="text" id="qty_cum" placeholder="เช่น 9 จุด จาก 159 จุดทั้งหมด">
       </div>
 
-      <hr class="divider">
-
-      <div class="field">
-        <div class="field-label">กำลังคน <span class="req">*</span></div>
-        <div class="field-row-3">
-          <div>
-            <div style="font-size:11px;color:var(--gray-500);text-align:center;margin-bottom:4px">Safety</div>
-            <input type="number" id="man_safety" placeholder="0" min="0" style="text-align:center" value="1">
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--gray-500);text-align:center;margin-bottom:4px">Supervisor</div>
-            <input type="number" id="man_super" placeholder="0" min="0" style="text-align:center" value="3">
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--gray-500);text-align:center;margin-bottom:4px">Skilled</div>
-            <input type="number" id="man_skilled" placeholder="0" min="0" style="text-align:center" value="5">
-          </div>
-        </div>
-        <div style="margin-top:8px">
-          <div style="font-size:11px;color:var(--gray-500);margin-bottom:4px">เจ้าหน้าที่อื่น ๆ</div>
-          <input type="text" id="man_other" placeholder="เช่น เจ้าหน้าที่ ปตท. 3 ท่าน">
-        </div>
-      </div>
-
-      <div class="field">
-        <div class="field-label">เครื่องจักร / อุปกรณ์</div>
-        <textarea id="p_equipment" rows="2"
-          placeholder="เช่น รถเครน 1 คัน, รถยนต์ 2 คัน, ปั๊มน้ำ 2 เครื่อง...">รถเครนบรรทุกน้ำ 1 คัน รถยนต์ 2 คัน ปั๊มน้ำ 2 เครื่อง หัวฉีดน้ำแรงดันสูง 1 ตัว ไม้วัดระยะ 1 อัน</textarea>
-      </div>
-
-      <div class="field">
-        <div class="field-label">วัสดุ / Material</div>
-        <input type="text" id="p_material" placeholder="เช่น น้ำ, น้ำมัน" value="1.น้ำ  2.น้ำมัน">
-      </div>
+      <hr class="divider"></div>
 
     </div>
   </div>
@@ -1412,8 +1172,11 @@ function buildChecklist() {
     const tr = document.createElement('tr');
     tr.className = 'ck-row';
     tr.innerHTML = `
-      <td>${item.label}</td>
       <td>
+        <div style="font-size:14px;font-weight:500;margin-bottom:6px">${item.label}</div>
+        <input type="text" id="ck_note_${item.id}" placeholder="หมายเหตุ / รายละเอียด..." style="font-size:13px;padding:8px 10px;border-radius:6px;border:1.5px solid var(--gray-200);background:var(--gray-100);width:100%;font-family:inherit">
+      </td>
+      <td style="vertical-align:top;padding-top:4px">
         <div class="status-pill-group">
           <button class="spl spl-ready sel" data-id="${item.id}" data-v="ready" onclick="setCK(this)">✓ Ready</button>
           <button class="spl spl-notready" data-id="${item.id}" data-v="notready" onclick="setCK(this)">✗ Not Ready</button>
@@ -1575,9 +1338,13 @@ function addPhotos(input) {
 /* ── DATA COLLECTION ── */
 function collectData() {
   const now = new Date();
-  // checklist
+  // checklist + notes
   const checklist = {};
-  CK_ITEMS.forEach(item => { checklist[item.id] = ckState[item.id] || 'ready'; });
+  const checklistNotes = {};
+  CK_ITEMS.forEach(item => {
+    checklist[item.id] = ckState[item.id] || 'ready';
+    checklistNotes[item.id] = document.getElementById('ck_note_' + item.id)?.value || '';
+  });
 
   // work types selected
   const workTypes = [...document.querySelectorAll('#workTypeChips .chip.sel')].map(c=>c.textContent.trim());
@@ -1607,18 +1374,19 @@ function collectData() {
     docRef: document.getElementById('g_docref').value,
     preparedBy: document.getElementById('g_preparedBy').value,
     checklist,
+    checklistNotes,
     checklistRemark: document.getElementById('ck_remark').value,
     status: statusTxt,
     pctDay: document.getElementById('pct_day').value,
     pctCum: document.getElementById('pct_cum').value,
     qtyToday: document.getElementById('qty_today').value,
     qtyCum: document.getElementById('qty_cum').value,
-    manSafety: document.getElementById('man_safety').value,
-    manSuper: document.getElementById('man_super').value,
-    manSkilled: document.getElementById('man_skilled').value,
-    manOther: document.getElementById('man_other').value,
-    equipment: document.getElementById('p_equipment').value,
-    material: document.getElementById('p_material').value,
+    manSafety: 0,
+    manSuper: 0,
+    manSkilled: 0,
+    manOther: '',
+    equipment: '',
+    material: '',
     hasIssue: document.getElementById('issueToggle').checked,
     issueSeverity: sevTxt,
     issueDesc: document.getElementById('iss_desc').value,
@@ -1851,12 +1619,12 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 /* ── PROGRESS BARS ── */
 .prog-section { margin-bottom:12px; }
 .prog-item { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.prog-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; width:130px; flex-shrink:0; }
+.prog-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; width:130px; flex-shrink:0; color:#5A2D00; }
 .prog-track { flex:1; height:16px; background:var(--gray-lt); border:1.5px solid var(--charcoal); overflow:hidden; }
 .prog-fill  { height:100%; }
 .fill-teal  { background:var(--teal); }
 .fill-amber { background:var(--coral); }
-.prog-val   { font-size:13px; font-weight:800; width:42px; text-align:right; flex-shrink:0; }
+.prog-val   { font-size:15px; font-weight:800; width:48px; text-align:right; flex-shrink:0; color:#7B2D00; }
 
 /* ── MANPOWER ── */
 .man-row { display:flex; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
@@ -2329,150 +2097,12 @@ function showToast(msg, type='') {
   toastTimer = setTimeout(()=>t.className='toast', toastDuration);
 }
 
-/* ── WELL DASHBOARD ── */
-const WELL_KEY   = 'dpr_tpssc_well';
-const WELL_TOTAL = 157;
-
-function loadWellData() {
-  try { return JSON.parse(localStorage.getItem(WELL_KEY) || 'null'); } catch(e) { return null; }
-}
-
-function saveWellData(data) {
-  try { localStorage.setItem(WELL_KEY, JSON.stringify(data)); } catch(e) {}
-}
-
-function updateWellUI(done, todayAdded, lastUpdate, lastDate) {
-  const remain = WELL_TOTAL - done;
-  const pct    = Math.round((done / WELL_TOTAL) * 100);
-  document.getElementById('wdDoneNum').textContent   = done;
-  document.getElementById('wdRemainNum').textContent = Math.max(0, remain);
-  document.getElementById('wdPct').textContent       = pct + '%';
-  document.getElementById('wdBarFill').style.width   = pct + '%';
-
-  if (lastUpdate) {
-    const dt = new Date(lastUpdate);
-    document.getElementById('wdLastUpdate').textContent =
-      dt.toLocaleDateString('th-TH',{day:'numeric',month:'short'}) + ' ' +
-      dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  }
-
-  const todayBadge = document.getElementById('wdTodayBadge');
-  if (lastDate === new Date().toDateString() && todayAdded > 0) {
-    todayBadge.style.display = 'inline-flex';
-    document.getElementById('wdTodayNum').textContent = todayAdded;
-  } else {
-    todayBadge.style.display = 'none';
-  }
-
-  document.getElementById('wdInputDone').value  = done;
-  document.getElementById('wdInputToday').value = '';
-}
-
-async function renderWellDashboard() {
-  // Show local data first (instant)
-  const local = loadWellData() || { done:0, todayAdded:0, lastUpdate:null, lastDate:null };
-  updateWellUI(local.done||0, local.todayAdded||0, local.lastUpdate, local.lastDate);
-
-  // Fetch from Google Sheets via JSONP (bypasses CORS)
-  if (GAS_URL) {
-    const cbName = 'gasCallback_' + Date.now();
-    const script = document.createElement('script');
-    script.src = GAS_URL + '?callback=' + cbName + '&t=' + Date.now();
-
-    window[cbName] = (json) => {
-      try {
-        if (json.status === 'ok' && json.wellDone >= (local.done||0)) {
-          const merged = {
-            done: json.wellDone,
-            todayAdded: local.todayAdded || 0,
-            lastUpdate: local.lastUpdate || new Date().toISOString(),
-            lastDate: local.lastDate || new Date().toDateString(),
-          };
-          saveWellData(merged);
-          updateWellUI(merged.done, merged.todayAdded, merged.lastUpdate, merged.lastDate);
-        }
-      } catch(e) { console.warn('JSONP parse error:', e); }
-      delete window[cbName];
-      script.remove();
-    };
-
-    script.onerror = () => { delete window[cbName]; script.remove(); };
-    document.head.appendChild(script);
-  }
-}
-
-function toggleWellEdit() {
-  const viewMode = document.getElementById('wellViewMode');
-  const editMode = document.getElementById('wellEditMode');
-  const btn      = document.querySelector('.wd-edit-btn');
-  const isEdit   = editMode.style.display === 'block';
-  editMode.style.display = isEdit ? 'none' : 'block';
-  viewMode.style.display = isEdit ? 'block' : 'none';
-  btn.textContent = isEdit ? '✏️ อัปเดต' : '✕ ยกเลิก';
-}
-
-async function saveWellProgress() {
-  const inputDone  = parseInt(document.getElementById('wdInputDone').value)  || 0;
-  const inputToday = parseInt(document.getElementById('wdInputToday').value) || 0;
-
-  const d = loadWellData() || { done: 0 };
-  let newDone = inputDone;
-  if (inputToday > 0) {
-    newDone = Math.min(WELL_TOTAL, (parseInt(d.done) || 0) + inputToday);
-  }
-  newDone = Math.min(WELL_TOTAL, Math.max(0, newDone));
-
-  const newData = {
-    done: newDone,
-    todayAdded: inputToday > 0 ? inputToday : (newDone - (parseInt(d.done)||0)),
-    lastUpdate: new Date().toISOString(),
-    lastDate: new Date().toDateString(),
-  };
-
-  saveWellData(newData);
-  renderWellDashboard();
-
-  // Back to view mode
-  document.getElementById('wellEditMode').style.display = 'none';
-  document.getElementById('wellViewMode').style.display = 'block';
-  document.querySelector('.wd-edit-btn').textContent = '✏️ อัปเดต';
-
-  showToast('⏳ กำลังส่งข้อมูลไป Server...', '');
-
-  // Send wellDone to Google Sheet via Apps Script
-  if (GAS_URL) {
-    try {
-      await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wellDone: newDone,
-          wellToday: newData.todayAdded,
-          date: new Date().toISOString().split('T')[0],
-          _type: 'wellUpdate'  // flag ว่าเป็น well update ไม่ใช่ report
-        }),
-      });
-      showToast(`✅ อัปเดตแล้ว — เสร็จ ${newDone}/${WELL_TOTAL} บ่อ (${Math.round(newDone/WELL_TOTAL*100)}%) · Synced ☁️`, 'success');
-    } catch(e) {
-      showToast(`✅ บันทึกในเครื่องแล้ว (ไม่มี internet)`, 'success');
-    }
-  } else {
-    showToast(`✅ อัปเดตแล้ว — เสร็จ ${newDone}/${WELL_TOTAL} บ่อ`, 'success');
-  }
-}
-
 /* ── INIT ── */
 window.onload = () => {
   initDate();
   buildChecklist();
   goSection(0);
-  renderWellDashboard();
 
-  // Auto-refresh well dashboard every 30 seconds
-  setInterval(() => {
-    renderWellDashboard();
-  }, 30000);
   // pre-open issue detail since there's a sample issue
   document.getElementById('issueToggle').checked = true;
   document.getElementById('issueDetail').classList.add('open');
