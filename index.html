@@ -958,16 +958,6 @@ input[type=range] {
         <input type="text" id="man_other" placeholder="เช่น เจ้าหน้าที่ ปตท. 3 ท่าน">
       </div>
 
-      <div class="field">
-        <div class="field-label">เครื่องจักร / อุปกรณ์</div>
-        <textarea id="p_equipment" placeholder="เช่น รถเครน 1 คัน, ปั๊มน้ำ 2 เครื่อง" rows="2"></textarea>
-      </div>
-
-      <div class="field">
-        <div class="field-label">วัสดุ / Material</div>
-        <input type="text" id="p_material" placeholder="เช่น น้ำ, น้ำมัน">
-      </div>
-
       <hr class="divider"></div>
 
     </div>
@@ -1418,8 +1408,8 @@ function collectData() {
     manSuper: document.getElementById('man_super')?.value || 0,
     manSkilled: document.getElementById('man_skilled')?.value || 0,
     manOther: document.getElementById('man_other')?.value || '',
-    equipment: document.getElementById('p_equipment')?.value || '',
-    material: document.getElementById('p_material')?.value || '',
+    equipment: '',
+    material: '',
     hasIssue: document.getElementById('issueToggle').checked,
     issueSeverity: sevTxt,
     issueDesc: document.getElementById('iss_desc').value,
@@ -1836,10 +1826,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
       <div class="man-cell"><div class="mc-num">${esc(data.manSkilled)||0}</div><div class="mc-role">Skilled</div></div>
       ${data.manOther ? `<div class="man-cell" style="background:var(--blush)"><div class="mc-num" style="font-size:14px">${esc(data.manOther)}</div><div class="mc-role">Other</div></div>` : ''}
     </div>
-    <div class="two-col">
-      <div class="panel"><div class="panel-hd ph-teal">เครื่องจักร / Equipment</div><div class="panel-body">${esc(data.equipment)||'—'}</div></div>
-      <div class="panel"><div class="panel-hd ph-olive">วัสดุ / Material</div><div class="panel-body">${esc(data.material)||'—'}</div></div>
-    </div>
+
     <div class="two-col" style="margin-bottom:0">
       <div class="panel"><div class="panel-hd">ปริมาณงานวันนี้</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyToday)||'—'}</div></div>
       <div class="panel"><div class="panel-hd ph-coral">ปริมาณงานสะสม</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
