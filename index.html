@@ -1607,7 +1607,7 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 
 /* ── CHECKLIST ── */
 .ck-list { border:1.5px solid var(--charcoal); overflow:hidden; background:white; margin-bottom:12px; }
-.ck-item { display:flex; align-items:center; justify-content:space-between; padding:7px 12px; border-bottom:1px solid var(--gray-bd); }
+.ck-item { display:flex; align-items:flex-start; justify-content:space-between; padding:8px 12px; border-bottom:1px solid var(--gray-bd); gap:10px; }
 .ck-item:last-child { border-bottom:none; }
 .ck-item:nth-child(even) { background:var(--gray-lt); }
 .ck-name { font-size:11px; font-weight:600; }
@@ -1765,10 +1765,17 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
     <div class="sec-hd sec-hd-coral"><span class="sh-label">2. Daily Readiness <em>Checklist</em></span></div>
     <div class="ck-list">
       ${CK_ITEMS.map(item => {
-        const st  = data.checklist?.[item.id] || 'ready';
-        const cls = st==='ready'?'ck-ready':st==='notready'?'ck-notready':'ck-na';
-        const lbl = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
-        return `<div class="ck-item"><span class="ck-name">${item.label}</span><span class="ck-badge ${cls}">${lbl}</span></div>`;
+        const st   = data.checklist?.[item.id] || 'ready';
+        const note = data.checklistNotes?.[item.id] || '';
+        const cls  = st==='ready'?'ck-ready':st==='notready'?'ck-notready':'ck-na';
+        const lbl  = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
+        return `<div class="ck-item">
+          <div>
+            <span class="ck-name">${item.label}</span>
+            ${note ? `<div style="font-size:10px;color:#A07060;margin-top:3px;font-style:italic">${esc(note)}</div>` : ''}
+          </div>
+          <span class="ck-badge ${cls}" style="flex-shrink:0">${lbl}</span>
+        </div>`;
       }).join('')}
     </div>
     ${data.checklistRemark ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">หมายเหตุ</div><div class="panel-body">${esc(data.checklistRemark)}</div></div>` : ''}
