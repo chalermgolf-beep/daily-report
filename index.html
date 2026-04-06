@@ -1829,10 +1829,51 @@ body { font-family:'Sarabun',sans-serif; background:#E8EEF8; color:#0A1628; font
   </div>
 
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <script>
-if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  window.onload = () => { setTimeout(() => window.print(), 400); };
-}
+window.onload = async () => {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (!isMobile) {
+    // Desktop: print directly
+    setTimeout(() => window.print(), 600);
+    return;
+  }
+
+  // Mobile: use jsPDF + html2canvas
+  await new Promise(r => setTimeout(r, 800));
+
+  const { jsPDF } = window.jspdf;
+  const page = document.querySelector('.page');
+
+  const canvas = await html2canvas(page, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#F0F5FF',
+    logging: false,
+  });
+
+  const imgData = canvas.toDataURL('image/jpeg', 0.92);
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const pdfW    = pdf.internal.pageSize.getWidth();
+  const pdfH    = pdf.internal.pageSize.getHeight();
+  const imgW    = canvas.width;
+  const imgH    = canvas.height;
+  const ratio   = pdfW / (imgW / 2 * 0.264583);
+  const totalH  = (imgH / 2) * 0.264583;
+
+  let yOffset = 0;
+  while (yOffset < totalH) {
+    if (yOffset > 0) pdf.addPage();
+    pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, totalH);
+    yOffset += pdfH;
+  }
+
+  pdf.save('DPR_Report.pdf');
+};
 <\/script>
 </body></html>`;
 
@@ -1840,7 +1881,7 @@ const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
-    showToast('⏳ กำลังสร้าง PDF...', '');
+    showToast('⏳ กำลังสร้าง PDF... รอสักครู่', '');
   } else {
     // Popup blocked (some mobile browsers) — fallback to HTML download
     const blob = new Blob([html], {type:'text/html;charset=utf-8'});
