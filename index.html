@@ -1423,7 +1423,7 @@ function collectData() {
     sig2: document.getElementById('sig2').value,
     sig3: document.getElementById('sig3').value,
     sig4: document.getElementById('sig4').value,
-    photos: [...document.querySelectorAll('#photoGrid .photo-thumb img')].map(img => img.src),
+    photos: [...new Set([...document.querySelectorAll('#photoGrid .photo-thumb img')].map(img => img.src))],
   };
 }
 
@@ -1501,6 +1501,11 @@ function generatePDF(data) {
   const pctDayNum  = parseInt(data.pctDay)||0;
   const pctCumNum  = parseInt(data.pctCum)||0;
   const manTotal   = (parseInt(data.manSafety)||0)+(parseInt(data.manSuper)||0)+(parseInt(data.manSkilled)||0);
+
+  // Deduplicate photos
+  if (data.photos && data.photos.length) {
+    data.photos = [...new Set(data.photos)];
+  }
 
   const html = `<!DOCTYPE html><html lang="th"><head>
 <meta charset="UTF-8">
@@ -1643,10 +1648,10 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
 .prog-section { margin-bottom:12px; }
 .prog-item { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
 .prog-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; width:130px; flex-shrink:0; color:#5A2D00; }
-.prog-track { flex:1; height:16px; background:var(--gray-lt); border:1.5px solid var(--charcoal); overflow:hidden; }
-.prog-fill  { height:100%; }
-.fill-teal  { background:var(--teal); }
-.fill-amber { background:var(--coral); }
+.prog-track { flex:1; height:16px; background:#F0E8E0; border:1.5px solid #C8A898; border-radius:8px; overflow:hidden; }
+.prog-fill  { height:100%; border-radius:8px; }
+.fill-teal  { background:#E8833A; }
+.fill-amber { background:#5CC8C8; }
 .prog-val   { font-size:15px; font-weight:800; width:48px; text-align:right; flex-shrink:0; color:#7B2D00; }
 
 /* ── MANPOWER ── */
@@ -1867,9 +1872,8 @@ body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--c
     <div class="sec-hd sec-hd-coral"><span class="sh-label">6. ภาพประกอบ / <em>Progress Photos</em></span></div>
     <div class="photo-grid-pdf">
       ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
+    </div>
     </div>` : ''}
-
-    </div><!-- /pdf-section -->
 
     <!-- SIGNATURES -->
     <div class="pdf-section">
