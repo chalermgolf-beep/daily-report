@@ -1509,503 +1509,334 @@ function generatePDF(data) {
 
   const html = `<!DOCTYPE html><html lang="th"><head>
 <meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
-  --teal:    #7B2D00;
-  --teal-dk: #5A1E00;
-  --coral:   #E8833A;
-  --amber:   #F9C846;
-  --olive:   #5CC8C8;
-  --blush:   #FFAD8A;
-  --charcoal:#2C1810;
-  --cream:   #FFF8F2;
-  --white:   #FFFFFF;
-  --gray-lt: #FFF0E6;
-  --gray-bd: #E8C9B0;
-  --gray-md: #A07060;
-  --text:    #2C1810;
-}
 * { box-sizing:border-box; margin:0; padding:0; }
 html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-body { font-family:'IBM Plex Sans Thai','Sarabun',sans-serif; background:var(--cream); color:var(--text); font-size:12px; line-height:1.55; }
-.page { max-width:210mm; margin:0 auto; background:var(--cream); padding:0; min-height:297mm; }
+body { font-family:'Sarabun',sans-serif; background:#D4C9B0; color:#1A1A1A; font-size:12px; }
+.page {
+  max-width:210mm; margin:0 auto;
+  background:#E8E0CC;
+  border:3px solid #1A1A1A;
+  min-height:297mm;
+  position:relative;
+}
 
-/* ── HEADER ── */
-.pdf-header {
-  background: var(--teal);
-  padding: 0;
-  display: flex;
-  position: relative;
-  overflow: hidden;
-  min-height: 110px;
+/* ── TOP ACCENT BAR ── */
+.top-bar {
+  background:linear-gradient(135deg,#F0A500 0%,#E8832A 60%,#C86820 100%);
+  padding:18px 28px 16px;
+  border-bottom:3px solid #1A1A1A;
+  position:relative;
+  overflow:hidden;
 }
-.pdf-header-left {
-  padding: 22px 28px 18px;
-  flex: 1;
-  position: relative;
-  z-index: 2;
+.top-bar::after {
+  content:'';
+  position:absolute;
+  top:0; right:0;
+  width:180px; height:100%;
+  background:rgba(0,0,0,0.15);
+  clip-path:polygon(30% 0,100% 0,100% 100%,0% 100%);
 }
-.pdf-header-left .org-name {
-  font-size: 10px; font-weight: 700; color: rgba(255,255,255,.7);
-  text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px;
+.brand-row {
+  display:flex; align-items:center; gap:8px;
+  margin-bottom:8px;
 }
-.pdf-header-left .doc-title-big {
-  font-size: 36px; font-weight: 800; color: var(--white);
-  line-height: .95; letter-spacing: -.01em; text-transform: uppercase;
+.brand-icon {
+  width:22px; height:22px;
+  background:#1A1A1A;
+  clip-path:polygon(50% 0%,0% 100%,100% 100%);
+  flex-shrink:0;
 }
-.pdf-header-left .doc-title-sub {
-  font-size: 11px; color: rgba(255,255,255,.65); margin-top: 6px; font-weight: 400;
+.brand-name {
+  font-size:11px; font-weight:800;
+  color:#1A1A1A; letter-spacing:.15em;
+  text-transform:uppercase;
 }
-.pdf-header-geo {
-  width: 140px; flex-shrink: 0;
-  display: grid; grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  overflow: hidden;
-  flex: 1;
-  min-height: 70px;
+.doc-title {
+  display:flex; align-items:baseline; gap:10px;
 }
-.geo-cell { width:70px; height:55px; position:relative; overflow:hidden; }
-.geo-cell.c1 { background:#E8833A; }
-.geo-cell.c2 { background:#F9C846; }
-.geo-cell.c3 { background:#5CC8C8; }
-.geo-cell.c4 { background:#FFAD8A; }
-/* Bauhaus quarter-circle shapes */
-.geo-cell.c1::after { content:''; position:absolute; width:100px; height:100px; background:#5A1E00; border-radius:50%; bottom:-50px; right:-50px; }
-.geo-cell.c2::after { content:''; position:absolute; width:80px; height:80px; background:#E8833A; border-radius:50%; top:-40px; left:-40px; }
-.geo-cell.c3::after { content:''; position:absolute; width:60px; height:60px; background:#F9C846; border-radius:50%; top:-30px; right:-30px; }
-.geo-cell.c4::after { content:''; position:absolute; width:90px; height:90px; background:#5CC8C8; border-radius:50%; bottom:-45px; left:-45px; }
+.doc-title .t1 {
+  font-size:52px; font-weight:800;
+  color:#1A1A1A; line-height:.9;
+  letter-spacing:-.02em;
+  text-transform:uppercase;
+}
+.doc-title .t2 {
+  font-size:48px; font-weight:400;
+  color:#1A1A1A; line-height:.9;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  font-style:italic;
+  -webkit-text-stroke:2px #1A1A1A;
+  color:transparent;
+}
 
 /* ── META INFO BAR ── */
 .meta-bar {
-  background: var(--charcoal); padding: 10px 28px;
-  display: flex; gap: 0; flex-wrap: wrap;
+  background:#1A1A1A;
+  padding:8px 28px;
+  display:flex; gap:24px; flex-wrap:wrap;
 }
-.meta-item {
-  padding: 0 20px 0 0; margin-right: 20px;
-  border-right: 1px solid rgba(255,255,255,.15);
-}
-.meta-item:last-child { border-right: none; }
-.meta-item .mi-label { font-size: 8px; font-weight: 700; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 2px; }
-.meta-item .mi-val   { font-size: 11px; font-weight: 600; color: var(--white); }
+.meta-item .mi-lbl { font-size:9px; font-weight:700; color:rgba(255,255,255,.5); text-transform:uppercase; letter-spacing:.1em; }
+.meta-item .mi-val { font-size:11px; font-weight:600; color:white; }
 
 /* ── BODY ── */
-.pdf-body { padding: 20px 28px 24px; }
-.pdf-section { break-inside:avoid; page-break-inside:avoid; margin-bottom:0; }
+.body { padding:20px 28px 28px; }
 
-/* ── KPI ROW ── */
-.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:20px; border:2px solid var(--charcoal); border-radius:0; overflow:hidden; }
-.kpi-cell { padding:12px 14px; text-align:center; border-right:2px solid var(--charcoal); }
-.kpi-cell:last-child { border-right:none; }
-.kpi-cell.bg-teal   { background:var(--teal);    color:white; }
-.kpi-cell.bg-coral  { background:var(--coral);   color:white; }
-.kpi-cell.bg-amber  { background:var(--amber);   color:var(--charcoal); }
-.kpi-cell.bg-olive  { background:var(--olive);   color:white; }
-.kpi-cell .kc-num  { font-size:26px; font-weight:800; line-height:1; }
-.kpi-cell .kc-lbl  { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-top:3px; opacity:.8; }
-
-/* ── SECTION HEADER ── */
-.sec-hd {
-  background:var(--charcoal); color:white;
-  padding:7px 12px; margin-bottom:10px; margin-top:18px;
+/* ── SECTION ── */
+.section { margin-bottom:16px; }
+.sec-label {
+  font-size:11px; font-weight:800;
+  color:#1A1A1A; text-transform:uppercase;
+  letter-spacing:.1em; margin-bottom:6px;
   display:flex; align-items:center; gap:8px;
 }
-.sec-hd:first-child { margin-top:0; }
-.sec-hd .sh-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; }
-.sec-hd .sh-label em { color:var(--amber); font-style:normal; }
-.sec-hd-coral  { background:var(--coral); }
-.sec-hd-teal   { background:var(--teal); }
-.sec-hd-amber  { background:var(--amber); color:var(--charcoal); }
-.sec-hd-olive  { background:var(--olive); }
+.sec-label::after {
+  content:''; flex:1; height:2px; background:#1A1A1A;
+}
 
-/* ── FIELD TABLE ── */
-.info-table { width:100%; border-collapse:collapse; margin-bottom:10px; }
-.info-table tr td { padding:8px 12px; border:1.5px solid var(--charcoal); font-size:12px; vertical-align:top; }
-.info-table tr td:first-child { background:var(--teal); color:white; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.05em; width:34%; }
-.info-table tr td:last-child  { background:white; }
-
-/* ── TWO COL ── */
-.two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-.panel { border:1.5px solid var(--charcoal); background:white; overflow:hidden; }
-.panel-hd { background:var(--coral); color:white; padding:6px 12px; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
-.panel-hd.ph-teal { background:var(--teal); color:white; }
-.panel-hd.ph-coral { background:var(--coral); color:white; }
-.panel-hd.ph-olive { background:var(--olive); color:white; }
-.panel-body { padding:10px 12px; font-size:12px; line-height:1.6; color:var(--text); }
+/* ── FIELD BOX ── */
+.field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.field-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:10px; }
+.field-full { margin-bottom:10px; }
+.field-lbl { font-size:9px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px; }
+.field-val {
+  background:white;
+  border:1.5px solid #1A1A1A;
+  padding:7px 10px;
+  font-size:12px; font-weight:500;
+  color:#1A1A1A; line-height:1.5;
+  min-height:32px;
+}
+.field-val.tall { min-height:56px; }
 
 /* ── CHECKLIST ── */
-.ck-list { border:1.5px solid var(--charcoal); overflow:hidden; background:white; margin-bottom:12px; }
-.ck-item { display:flex; align-items:flex-start; justify-content:space-between; padding:8px 12px; border-bottom:1px solid var(--gray-bd); gap:10px; }
+.ck-wrap { border:1.5px solid #1A1A1A; overflow:hidden; background:white; margin-bottom:10px; }
+.ck-item { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 12px; border-bottom:1px solid #CCC; gap:10px; }
 .ck-item:last-child { border-bottom:none; }
-.ck-item:nth-child(even) { background:var(--gray-lt); }
+.ck-item:nth-child(even) { background:#F5F2EC; }
 .ck-name { font-size:11px; font-weight:600; }
-.ck-badge { font-size:9px; font-weight:800; padding:3px 10px; text-transform:uppercase; letter-spacing:.05em; }
-.ck-ready    { background:var(--olive);  color:white; }
-.ck-notready { background:var(--coral);  color:white; }
-.ck-na       { background:var(--gray-md);color:white; }
+.ck-note { font-size:10px; color:#888; font-style:italic; margin-top:2px; }
+.ck-badge { font-size:9px; font-weight:800; padding:3px 10px; text-transform:uppercase; letter-spacing:.05em; flex-shrink:0; border:1.5px solid #1A1A1A; }
+.ck-ready    { background:#1A1A1A; color:white; }
+.ck-notready { background:#E8832A; color:white; }
+.ck-na       { background:#CCC; color:#555; }
 
-/* ── PROGRESS BARS ── */
-.prog-section { margin-bottom:12px; }
-.prog-item { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
-.prog-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; width:130px; flex-shrink:0; color:#5A2D00; }
-.prog-track { flex:1; height:16px; background:#F0E8E0; border:1.5px solid #C8A898; border-radius:8px; overflow:hidden; }
-.prog-fill  { height:100%; border-radius:8px; }
-.fill-teal  { background:#E8833A; }
-.fill-amber { background:#5CC8C8; }
-.prog-val   { font-size:15px; font-weight:800; width:48px; text-align:right; flex-shrink:0; color:#7B2D00; }
+/* ── KPI ROW ── */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); border:2px solid #1A1A1A; overflow:hidden; margin-bottom:10px; }
+.kpi-cell { padding:10px 8px; text-align:center; border-right:2px solid #1A1A1A; }
+.kpi-cell:last-child { border-right:none; }
+.kpi-cell.k1 { background:#1A1A1A; color:white; }
+.kpi-cell.k2 { background:#F0A500; color:#1A1A1A; }
+.kpi-cell.k3 { background:#E8E0CC; color:#1A1A1A; }
+.kpi-cell.k4 { background:#E8832A; color:white; }
+.kpi-num { font-size:24px; font-weight:800; line-height:1; }
+.kpi-lbl { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-top:3px; opacity:.8; }
+
+/* ── PROGRESS ── */
+.prog-item { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.prog-lbl { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; width:120px; flex-shrink:0; }
+.prog-track { flex:1; height:16px; background:white; border:1.5px solid #1A1A1A; overflow:hidden; }
+.prog-fill-day  { height:100%; background:#F0A500; }
+.prog-fill-cum  { height:100%; background:#1A1A1A; }
+.prog-val { font-size:14px; font-weight:800; width:42px; text-align:right; }
 
 /* ── MANPOWER ── */
-.man-row { display:flex; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
-.man-cell { flex:1; text-align:center; padding:10px 6px; border-right:1.5px solid var(--charcoal); background:white; }
+.man-row { display:flex; border:1.5px solid #1A1A1A; overflow:hidden; margin-bottom:10px; }
+.man-cell { flex:1; text-align:center; padding:8px 6px; border-right:1.5px solid #1A1A1A; background:white; }
 .man-cell:last-child { border-right:none; }
-.man-cell:nth-child(1) { background:var(--teal); color:white; }
-.man-cell:nth-child(2) { background:var(--amber); color:var(--charcoal); }
-.man-cell:nth-child(3) { background:var(--olive); color:white; }
-.man-cell .mc-num  { font-size:22px; font-weight:800; line-height:1; }
-.man-cell .mc-role { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-top:3px; opacity:.85; }
+.man-cell:nth-child(1) { background:#1A1A1A; color:white; }
+.man-cell:nth-child(2) { background:#F0A500; color:#1A1A1A; }
+.man-cell:nth-child(3) { background:#E8832A; color:white; }
+.man-num { font-size:20px; font-weight:800; line-height:1; }
+.man-role { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-top:2px; opacity:.85; }
 
 /* ── ISSUE ── */
-.issue-box { border:2px solid var(--coral); background:white; overflow:hidden; margin-bottom:12px; }
-.issue-box-hd { background:var(--coral); color:white; padding:7px 12px; font-size:10px; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
-.issue-box-body { padding:12px; font-size:12px; line-height:1.7; }
-.issue-box-body strong { font-weight:700; }
-.no-issue { border:2px solid var(--olive); background:white; padding:10px 14px; display:flex; align-items:center; gap:8px; font-size:11px; font-weight:700; color:var(--olive); text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px; }
-
-/* ── STEPS (Work Steps style) ── */
-.steps-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
-.step-item { padding:10px 14px; border-right:1.5px solid var(--charcoal); border-bottom:1.5px solid var(--charcoal); background:white; }
-.step-item:nth-child(even) { border-right:none; }
-.step-item:nth-last-child(-n+2) { border-bottom:none; }
-.step-num { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--teal); margin-bottom:4px; }
-.step-val { font-size:12px; font-weight:500; line-height:1.5; }
+.issue-box { border:2px solid #1A1A1A; overflow:hidden; margin-bottom:10px; }
+.issue-hd { background:#E8832A; color:white; padding:7px 12px; font-size:10px; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
+.issue-body { background:white; padding:12px; font-size:12px; line-height:1.7; }
+.no-issue { border:2px solid #1A1A1A; background:#1A1A1A; color:white; padding:10px 14px; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; margin-bottom:10px; }
 
 /* ── PHOTOS ── */
-.photo-grid-pdf { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-.photo-grid-pdf img { width:100%; aspect-ratio:4/3; object-fit:cover; border:1.5px solid var(--charcoal); display:block; }
+.photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:10px; }
+.photo-grid img { width:100%; aspect-ratio:4/3; object-fit:cover; border:1.5px solid #1A1A1A; display:block; }
 
 /* ── SIGNATURES ── */
-.sig-row { display:flex; gap:0; border:1.5px solid var(--charcoal); overflow:hidden; margin-bottom:12px; }
-.sig-cell { flex:1; text-align:center; padding:10px 6px 14px; border-right:1.5px solid var(--charcoal); background:white; }
+.sig-row { display:flex; border:1.5px solid #1A1A1A; overflow:hidden; margin-bottom:10px; }
+.sig-cell { flex:1; text-align:center; padding:8px 6px 14px; border-right:1.5px solid #1A1A1A; background:white; }
 .sig-cell:last-child { border-right:none; }
-.sig-cell .sc-role { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-md); margin-bottom:24px; display:block; }
-.sig-cell .sc-line { border-top:1.5px solid var(--charcoal); margin:0 10px 6px; }
-.sig-cell .sc-name { font-size:10px; font-weight:700; color:var(--charcoal); }
+.sig-role { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#888; margin-bottom:20px; display:block; }
+.sig-line { border-top:1.5px solid #1A1A1A; margin:0 8px 5px; }
+.sig-name { font-size:10px; font-weight:700; }
 
 /* ── FOOTER ── */
-.pdf-footer {
-  background:#5A1E00; color:rgba(255,255,255,.6);
-  padding:8px 28px; display:flex; justify-content:space-between; align-items:center;
-  font-size:9px;
-}
-.pdf-footer strong { color:white; }
+.doc-footer { background:#1A1A1A; color:rgba(255,255,255,.6); padding:8px 28px; display:flex; justify-content:space-between; font-size:9px; }
+.doc-footer strong { color:white; }
 
 @media print {
-  body  { background:var(--cream); }
-  .page { padding:0; }
-
-  /* ── PAGE BREAK CONTROL ── */
-  .sec-hd          { break-after:avoid; page-break-after:avoid; }
-  .info-table      { break-inside:avoid; page-break-inside:avoid; }
-  .ck-list         { break-inside:avoid; page-break-inside:avoid; }
-  .prog-section    { break-inside:avoid; page-break-inside:avoid; }
-  .man-row         { break-inside:avoid; page-break-inside:avoid; }
-  .two-col         { break-inside:avoid; page-break-inside:avoid; }
-  .steps-grid      { break-inside:avoid; page-break-inside:avoid; }
-  .issue-box       { break-inside:avoid; page-break-inside:avoid; }
-  .no-issue        { break-inside:avoid; page-break-inside:avoid; }
-  .sig-row         { break-inside:avoid; page-break-inside:avoid; }
-  .kpi-row         { break-inside:avoid; page-break-inside:avoid; }
-  .photo-grid-pdf  { break-inside:avoid; page-break-inside:avoid; }
-  .panel           { break-inside:avoid; page-break-inside:avoid; }
-  .pdf-footer      { break-inside:avoid; page-break-inside:avoid; }
-
-  /* Keep section header with its first content block */
-  .sec-hd + *      { break-before:avoid; page-break-before:avoid; }
-
-  /* Prevent single orphan rows */
-  .ck-item         { break-inside:avoid; page-break-inside:avoid; }
-  tr               { break-inside:avoid; page-break-inside:avoid; }
+  body { background:#E8E0CC; }
+  .page { border:none; }
+  .section { break-inside:avoid; }
+  .sec-label { break-after:avoid; }
 }
 </style></head><body>
 <div class="page">
 
   <!-- HEADER -->
-  <div class="pdf-header">
-    <div class="pdf-header-left">
-      <div class="org-name">TPS-SC Consortium · CHQ Data Center / Amata City (Rayong)</div>
-      <div class="doc-title-big">DAILY<br>REPORT</div>
-      <div class="doc-title-sub">รายงานความคืบหน้าประจำวัน</div>
+  <div class="top-bar">
+    <div class="brand-row">
+      <div class="brand-icon"></div>
+      <span class="brand-name">TPS-SC Consortium · CHQ Data Center / Amata City (Rayong)</span>
     </div>
-    <div class="pdf-header-geo">
-      <div class="geo-cell c1"></div>
-      <div class="geo-cell c2"></div>
-      <div class="geo-cell c3"></div>
-      <div class="geo-cell c4"></div>
+    <div class="doc-title">
+      <span class="t1">Daily</span>
+      <span class="t2">Report</span>
     </div>
   </div>
 
   <!-- META BAR -->
   <div class="meta-bar">
-    <div class="meta-item"><div class="mi-label">วันที่</div><div class="mi-val">${esc(dateLabel)}</div></div>
-    <div class="meta-item"><div class="mi-label">สัญญา</div><div class="mi-val">${esc(data.contract)}</div></div>
-    <div class="meta-item"><div class="mi-label">Zone / Area</div><div class="mi-val">${esc(data.zone)||'—'}</div></div>
-    <div class="meta-item"><div class="mi-label">เวลา</div><div class="mi-val">${esc(data.timeStart)||'—'} – ${esc(data.timeEnd)||'—'}</div></div>
-    <div class="meta-item"><div class="mi-label">Prepared By</div><div class="mi-val">${esc(data.preparedBy)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-lbl">วันที่</div><div class="mi-val">${esc(dateLabel)}</div></div>
+    <div class="meta-item"><div class="mi-lbl">สัญญา</div><div class="mi-val">${esc(data.contract)}</div></div>
+    <div class="meta-item"><div class="mi-lbl">Zone / Area</div><div class="mi-val">${esc(data.zone)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-lbl">เวลา</div><div class="mi-val">${esc(data.timeStart)||'—'} – ${esc(data.timeEnd)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-lbl">Prepared By</div><div class="mi-val">${esc(data.preparedBy)||'—'}</div></div>
   </div>
 
-  <div class="pdf-body">
+  <div class="body">
 
-    <!-- KPI ROW -->
+    <!-- KPI -->
     <div class="kpi-row">
-      <div class="kpi-cell" style="background:#7B2D00;color:white">
-        <div class="kc-num">${pctDayNum}%</div>
-        <div class="kc-lbl">Progress Today</div>
+      <div class="kpi-cell k1"><div class="kpi-num">${pctDayNum}%</div><div class="kpi-lbl">Progress Today</div></div>
+      <div class="kpi-cell k2"><div class="kpi-num">${pctCumNum}%</div><div class="kpi-lbl">Cumulative</div></div>
+      <div class="kpi-cell k3"><div class="kpi-num">${manTotal}</div><div class="kpi-lbl">Manpower</div></div>
+      <div class="kpi-cell k4"><div class="kpi-num" style="font-size:14px;padding-top:4px">${data.hasIssue?'ISSUE':'CLEAR'}</div><div class="kpi-lbl">Status</div></div>
+    </div>
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <div class="sec-label">1. General Information / ข้อมูลทั่วไป</div>
+      <div class="field-row">
+        <div><div class="field-lbl">ทีมรับผิดชอบ</div><div class="field-val">${esc(data.team)||'—'}</div></div>
+        <div><div class="field-lbl">ประเภทงาน</div><div class="field-val">${esc(data.workTypes?.join(', '))||'—'}</div></div>
       </div>
-      <div class="kpi-cell" style="background:#E8833A;color:white">
-        <div class="kc-num">${pctCumNum}%</div>
-        <div class="kc-lbl">Cumulative</div>
-      </div>
-      <div class="kpi-cell" style="background:#F9C846;color:#4A3200">
-        <div class="kc-num">${manTotal}</div>
-        <div class="kc-lbl">Total Manpower</div>
-      </div>
-      <div class="kpi-cell" style="background:#5CC8C8;color:#003A3A">
-        <div class="kc-num" style="font-size:14px;padding-top:4px">${data.hasIssue ? 'ISSUE' : 'CLEAR'}</div>
-        <div class="kc-lbl">Site Status</div>
+      <div class="field-full"><div class="field-lbl">กิจกรรมวันนี้ / Today's Activities</div><div class="field-val tall">${esc(data.activity)||'—'}</div></div>
+      <div class="field-row">
+        <div><div class="field-lbl">เอกสารอ้างอิง</div><div class="field-val">${esc(data.docRef)||'—'}</div></div>
+        <div><div class="field-lbl">Site Coordination</div><div class="field-val">${esc(data.siteCoord?.join(', '))||'—'}</div></div>
       </div>
     </div>
 
-    <!-- GENERAL INFO -->
-    <div class="pdf-section">
-    <div class="sec-hd sec-hd-teal"><span class="sh-label">1. ข้อมูลทั่วไป / <em>General Information</em></span></div>
-    <table class="info-table">
-      <tr><td>ทีมรับผิดชอบ</td><td>${esc(data.team)||'—'}</td></tr>
-      <tr><td>ประเภทงาน</td><td>${esc(data.workTypes?.join(', '))||'—'}</td></tr>
-      <tr><td>กิจกรรมวันนี้<br>Today's Activities</td><td>${esc(data.activity)||'—'}</td></tr>
-      <tr><td>เอกสารอ้างอิง</td><td>${esc(data.docRef)||'—'}</td></tr>
-      <tr><td>Site Coordination</td><td>${esc(data.siteCoord?.join(', '))||'—'}</td></tr>
-    </table>
-
-    </div><!-- /pdf-section -->
-
-    <!-- CHECKLIST -->
-    <div class="pdf-section">
-    <div class="sec-hd sec-hd-coral"><span class="sh-label">2. Daily Readiness <em>Checklist</em></span></div>
-    <div class="ck-list">
-      ${CK_ITEMS.map(item => {
-        const st   = data.checklist?.[item.id] || 'ready';
-        const note = data.checklistNotes?.[item.id] || '';
-        const cls  = st==='ready'?'ck-ready':st==='notready'?'ck-notready':'ck-na';
-        const lbl  = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
-        return `<div class="ck-item">
-          <div>
-            <span class="ck-name">${item.label}</span>
-            ${note ? `<div style="font-size:10px;color:#A07060;margin-top:3px;font-style:italic">${esc(note)}</div>` : ''}
-          </div>
-          <span class="ck-badge ${cls}" style="flex-shrink:0">${lbl}</span>
-        </div>`;
-      }).join('')}
+    <!-- SECTION 2 -->
+    <div class="section">
+      <div class="sec-label">2. Daily Readiness Checklist</div>
+      <div class="ck-wrap">
+        ${CK_ITEMS.map(item => {
+          const st   = data.checklist?.[item.id] || 'ready';
+          const note = data.checklistNotes?.[item.id] || '';
+          const cls  = st==='ready'?'ck-ready':st==='notready'?'ck-notready':'ck-na';
+          const lbl  = st==='ready'?'✓ Ready':st==='notready'?'✗ Not Ready':'N/A';
+          return `<div class="ck-item">
+            <div>
+              <div class="ck-name">${item.label}</div>
+              ${note ? `<div class="ck-note">${esc(note)}</div>` : ''}
+            </div>
+            <span class="ck-badge ${cls}">${lbl}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${data.checklistRemark ? `<div class="field-full"><div class="field-lbl">หมายเหตุ</div><div class="field-val">${esc(data.checklistRemark)}</div></div>` : ''}
     </div>
-    ${data.checklistRemark ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">หมายเหตุ</div><div class="panel-body">${esc(data.checklistRemark)}</div></div>` : ''}
 
-    </div><!-- /pdf-section -->
-
-    <!-- PROGRESS -->
-    <div class="pdf-section">
-    <div class="sec-hd sec-hd-amber"><span class="sh-label">3. ความคืบหน้า / <em>Progress Today</em></span></div>
-    <div class="prog-section">
+    <!-- SECTION 3 -->
+    <div class="section">
+      <div class="sec-label">3. Progress Today / ความคืบหน้า</div>
       <div class="prog-item">
-        <span class="prog-label">Progress Today</span>
-        <div class="prog-track"><div class="prog-fill fill-teal" style="width:${pctDayNum}%"></div></div>
+        <span class="prog-lbl">Progress Today</span>
+        <div class="prog-track"><div class="prog-fill-day" style="width:${pctDayNum}%"></div></div>
         <span class="prog-val">${pctDayNum}%</span>
       </div>
       <div class="prog-item">
-        <span class="prog-label">Cumulative</span>
-        <div class="prog-track"><div class="prog-fill fill-amber" style="width:${pctCumNum}%"></div></div>
+        <span class="prog-lbl">Cumulative</span>
+        <div class="prog-track"><div class="prog-fill-cum" style="width:${pctCumNum}%"></div></div>
         <span class="prog-val">${pctCumNum}%</span>
       </div>
+      <div class="man-row">
+        <div class="man-cell"><div class="man-num">${esc(data.manSafety)||0}</div><div class="man-role">Safety</div></div>
+        <div class="man-cell"><div class="man-num">${esc(data.manSuper)||0}</div><div class="man-role">Supervisor</div></div>
+        <div class="man-cell"><div class="man-num">${esc(data.manSkilled)||0}</div><div class="man-role">Skilled</div></div>
+        ${data.manOther ? `<div class="man-cell" style="background:#E8E0CC"><div class="man-num" style="font-size:13px">${esc(data.manOther)}</div><div class="man-role">Other</div></div>` : ''}
+      </div>
+      <div class="field-row">
+        <div><div class="field-lbl">ปริมาณงานวันนี้</div><div class="field-val" style="font-size:16px;font-weight:800">${esc(data.qtyToday)||'—'}</div></div>
+        <div><div class="field-lbl">ปริมาณงานสะสม</div><div class="field-val" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
+      </div>
     </div>
-    <div class="man-row">
-      <div class="man-cell"><div class="mc-num">${esc(data.manSafety)||0}</div><div class="mc-role">Safety</div></div>
-      <div class="man-cell"><div class="mc-num">${esc(data.manSuper)||0}</div><div class="mc-role">Supervisor</div></div>
-      <div class="man-cell"><div class="mc-num">${esc(data.manSkilled)||0}</div><div class="mc-role">Skilled</div></div>
-      ${data.manOther ? `<div class="man-cell" style="background:var(--blush)"><div class="mc-num" style="font-size:14px">${esc(data.manOther)}</div><div class="mc-role">Other</div></div>` : ''}
+
+    <!-- SECTION 4 -->
+    <div class="section">
+      <div class="sec-label">4. Issues & Actions / ปัญหา อุปสรรค</div>
+      ${data.hasIssue
+        ? `<div class="issue-box">
+            <div class="issue-hd">⚠ Issue Detected · ระดับ: ${esc(data.issueSeverity)||'—'}</div>
+            <div class="issue-body">
+              <div style="margin-bottom:6px"><strong>รายละเอียด / Description:</strong><br>${esc(data.issueDesc)||'—'}</div>
+              <div><strong>แนวทางแก้ไข / Corrective Action:</strong><br>${esc(data.issueAction)||'—'}</div>
+            </div>
+          </div>`
+        : `<div class="no-issue">✓ No Issues Reported / ไม่มีปัญหา</div>`
+      }
+      ${data.miscNote ? `<div class="field-full"><div class="field-lbl">Miscellaneous</div><div class="field-val">${esc(data.miscNote)}</div></div>` : ''}
     </div>
 
-    <div class="two-col" style="margin-bottom:0">
-      <div class="panel"><div class="panel-hd">ปริมาณงานวันนี้</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyToday)||'—'}</div></div>
-      <div class="panel"><div class="panel-hd ph-coral">ปริมาณงานสะสม</div><div class="panel-body" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
-    </div>
-
-    </div><!-- /pdf-section -->
-
-    <!-- ISSUES -->
-    <div class="pdf-section">
-    <div class="sec-hd" style="margin-top:0"><span class="sh-label">4. ปัญหา / อุปสรรค / <em style="color:var(--amber)">Issues & Actions</em></span></div>
-    ${data.hasIssue
-      ? `<div class="issue-box">
-           <div class="issue-box-hd">⚠ มีปัญหา / Issue Detected &nbsp;·&nbsp; ระดับ: ${esc(data.issueSeverity)||'—'}</div>
-           <div class="issue-box-body">
-             <div style="margin-bottom:6px"><strong>รายละเอียด / Description:</strong><br>${esc(data.issueDesc)||'—'}</div>
-             <div><strong>แนวทางแก้ไข / Corrective Action:</strong><br>${esc(data.issueAction)||'—'}</div>
-           </div>
-         </div>`
-      : `<div class="no-issue">✓ ไม่มีปัญหา / No Issues Reported</div>`
-    }
-    ${data.miscNote ? `<div class="panel" style="margin-bottom:12px"><div class="panel-hd ph-teal">Miscellaneous</div><div class="panel-body">${esc(data.miscNote)}</div></div>` : ''}
-
-    </div><!-- /pdf-section -->
-
-    <!-- TOMORROW -->
-    <div class="pdf-section">
-    <div class="sec-hd sec-hd-olive"><span class="sh-label">5. แผนพรุ่งนี้ / <em style="color:var(--amber)">Tomorrow's Plan</em></span></div>
-    <div class="steps-grid">
-      <div class="step-item"><div class="step-num">แผนงาน / Plan</div><div class="step-val">${esc(data.tmrPlan)||'—'}</div></div>
-      <div class="step-item"><div class="step-num">เป้าหมายปริมาณงาน</div><div class="step-val">${esc(data.tmrTarget)||'—'}</div></div>
-      <div class="step-item" style="border-bottom:none"><div class="step-num">หมายเหตุพิเศษ</div><div class="step-val">${esc(data.tmrNote)||'—'}</div></div>
-      <div class="step-item" style="border-bottom:none;background:var(--gray-lt)"></div>
+    <!-- SECTION 5 -->
+    <div class="section">
+      <div class="sec-label">5. Tomorrow's Plan / แผนพรุ่งนี้</div>
+      <div class="field-full"><div class="field-lbl">แผนงาน</div><div class="field-val tall">${esc(data.tmrPlan)||'—'}</div></div>
+      <div class="field-row">
+        <div><div class="field-lbl">เป้าหมายปริมาณงาน</div><div class="field-val">${esc(data.tmrTarget)||'—'}</div></div>
+        <div><div class="field-lbl">หมายเหตุพิเศษ</div><div class="field-val">${esc(data.tmrNote)||'—'}</div></div>
+      </div>
     </div>
 
     <!-- PHOTOS -->
     ${data.photos && data.photos.length ? `
-    <div class="pdf-section">
-    <div class="sec-hd sec-hd-coral"><span class="sh-label">6. ภาพประกอบ / <em>Progress Photos</em></span></div>
-    <div class="photo-grid-pdf">
-      ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
-    </div>
+    <div class="section">
+      <div class="sec-label">6. Progress Photos / ภาพประกอบ</div>
+      <div class="photo-grid">
+        ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
+      </div>
     </div>` : ''}
 
     <!-- SIGNATURES -->
-    <div class="pdf-section">
-    <div class="sec-hd" style="background:var(--charcoal)"><span class="sh-label">ลายเซ็นผู้รับรอง / <em style="color:var(--amber)">Approval Signatures</em></span></div>
-    <div class="sig-row">
-      <div class="sig-cell"><span class="sc-role">ผู้จัดทำ / Prepared By</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig1)||'—'}</div></div>
-      <div class="sig-cell"><span class="sc-role">ผู้ควบคุมงานทีม / Supervisor</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig2)||'—'}</div></div>
-      <div class="sig-cell"><span class="sc-role">Safety Supervisor</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig3)||'—'}</div></div>
-      <div class="sig-cell"><span class="sc-role">ผู้ควบคุม TPS-SC</span><div class="sc-line"></div><div class="sc-name">${esc(data.sig4)||'—'}</div></div>
+    <div class="section">
+      <div class="sec-label">Approval Signatures / ลายเซ็นผู้รับรอง</div>
+      <div class="sig-row">
+        <div class="sig-cell"><span class="sig-role">ผู้จัดทำ / Prepared By</span><div class="sig-line"></div><div class="sig-name">${esc(data.sig1)||'—'}</div></div>
+        <div class="sig-cell"><span class="sig-role">ผู้ควบคุมงานทีม / Supervisor</span><div class="sig-line"></div><div class="sig-name">${esc(data.sig2)||'—'}</div></div>
+        <div class="sig-cell"><span class="sig-role">Safety Supervisor</span><div class="sig-line"></div><div class="sig-name">${esc(data.sig3)||'—'}</div></div>
+        <div class="sig-cell"><span class="sig-role">ผู้ควบคุม TPS-SC</span><div class="sig-line"></div><div class="sig-name">${esc(data.sig4)||'—'}</div></div>
+      </div>
     </div>
 
-    </div><!-- /pdf-section -->
-  </div><!-- /pdf-body -->
+  </div><!-- /body -->
 
   <!-- FOOTER -->
-  <div class="pdf-footer">
+  <div class="doc-footer">
     <div><strong>TPS-SC Consortium</strong> · CHQ Data Center / Amata City (Rayong) · สัญญาที่ ${esc(data.contract)}</div>
     <div>Generated: ${new Date(data.generatedAt).toLocaleString('th-TH')}</div>
   </div>
 
 </div>
-<style>
-#pdf-loading {
-  position:fixed; inset:0; background:rgba(13,43,94,0.92);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  z-index:9999; color:white; font-family:'Sarabun',sans-serif;
-}
-#pdf-loading .ld-spinner {
-  width:48px; height:48px; border:5px solid rgba(255,255,255,.2);
-  border-top-color:#F1C40F; border-radius:50%;
-  animation:spin .8s linear infinite; margin-bottom:16px;
-}
-#pdf-loading .ld-text { font-size:16px; font-weight:700; margin-bottom:6px; }
-#pdf-loading .ld-sub  { font-size:12px; color:rgba(255,255,255,.6); }
-@keyframes spin { to { transform:rotate(360deg); } }
-<\/style>
-<div id="pdf-loading">
-  <div class="ld-spinner"></div>
-  <div class="ld-text">กำลังสร้าง PDF...</div>
-  <div class="ld-sub">กรุณารอสักครู่</div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
 <script>
-window.onload = async () => {
-  const { jsPDF } = window.jspdf;
-
-  // Wait for fonts/images
-  await new Promise(r => setTimeout(r, 900));
-
-  const pdf     = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  const pdfW    = pdf.internal.pageSize.getWidth();   // 210mm
-  const pdfH    = pdf.internal.pageSize.getHeight();  // 297mm
-  const margin  = 0;
-  const usableW = pdfW - margin * 2;
-  const usableH = pdfH - margin * 2;
-  const scale   = 2.5;
-  const mmPerPx = 0.264583;
-
-  // ── Collect sections to render one-by-one ──
-  // Each "block" = one element we render independently
-  const blocks = [
-    document.querySelector('.pdf-header'),
-    document.querySelector('.meta-bar'),
-    document.querySelector('.pdf-body > .kpi-row'),
-    ...document.querySelectorAll('.pdf-section'),
-    document.querySelector('.pdf-footer'),
-  ].filter(Boolean);
-
-  let cursorY = margin;  // current Y position on current page (mm)
-  let firstPage = true;
-
-  for (const block of blocks) {
-    // Render this block to canvas
-    const canvas = await html2canvas(block, {
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: null,
-      logging: false,
-    });
-
-    const imgW   = canvas.width;
-    const imgH   = canvas.height;
-    // Scale image to fit PDF width
-    const rendW  = usableW;
-    const rendH  = (imgH / imgW) * rendW;
-
-    // If block doesn't fit on remaining space → new page
-    // (allow first block to always go on first page)
-    if (!firstPage && cursorY + rendH > pdfH - margin) {
-      pdf.addPage();
-      cursorY = margin;
-    }
-    firstPage = false;
-
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
-    // If single block is taller than a full page, split it
-    if (rendH > usableH) {
-      // Render in slices matching page height
-      const sliceHpx = Math.floor((usableH / rendH) * imgH);
-      let sliceStartPx = 0;
-      while (sliceStartPx < imgH) {
-        const sliceCanvas  = document.createElement('canvas');
-        const actualSliceH = Math.min(sliceHpx, imgH - sliceStartPx);
-        sliceCanvas.width  = imgW;
-        sliceCanvas.height = actualSliceH;
-        sliceCanvas.getContext('2d').drawImage(
-          canvas, 0, sliceStartPx, imgW, actualSliceH, 0, 0, imgW, actualSliceH
-        );
-        const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.92);
-        const sliceRendH = (actualSliceH / imgW) * rendW;
-        if (sliceStartPx > 0) { pdf.addPage(); cursorY = margin; }
-        pdf.addImage(sliceData, 'JPEG', margin, cursorY, rendW, sliceRendH);
-        cursorY += sliceRendH;
-        sliceStartPx += actualSliceH;
-      }
-    } else {
-      pdf.addImage(imgData, 'JPEG', margin, cursorY, rendW, rendH);
-      cursorY += rendH;
-    }
-  }
-
-  document.getElementById('pdf-loading').style.display='none';
-  pdf.save('DPR_Report.pdf');
-};
+if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  window.onload = () => { setTimeout(() => window.print(), 400); };
+}
 <\/script>
-</body></html>`;
+</body></html>\`;
 
-  // Always open in new tab — jsPDF will auto-save as PDF
-  const win = window.open('', '_blank');
+const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
