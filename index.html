@@ -1836,40 +1836,71 @@ window.onload = async () => {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if (!isMobile) {
-    // Desktop: print directly
     setTimeout(() => window.print(), 600);
     return;
   }
 
-  // Mobile: use jsPDF + html2canvas
-  await new Promise(r => setTimeout(r, 800));
+  await new Promise(r => setTimeout(r, 900));
 
   const { jsPDF } = window.jspdf;
-  const page = document.querySelector('.page');
+  const pdf    = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const pdfW   = pdf.internal.pageSize.getWidth();
+  const pdfH   = pdf.internal.pageSize.getHeight();
+  const margin = 0;
+  const scale  = 2.5;
 
-  const canvas = await html2canvas(page, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: '#F0F5FF',
-    logging: false,
-  });
+  // Collect all sections to render one-by-one
+  const blocks = [
+    document.querySelector('.top-bar'),
+    document.querySelector('.meta-bar'),
+    document.querySelector('.body > .kpi-row'),
+    ...document.querySelectorAll('.body > .section'),
+    document.querySelector('.doc-footer'),
+  ].filter(Boolean);
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.92);
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  let cursorY   = margin;
+  let firstPage = true;
 
-  const pdfW    = pdf.internal.pageSize.getWidth();
-  const pdfH    = pdf.internal.pageSize.getHeight();
-  const imgW    = canvas.width;
-  const imgH    = canvas.height;
-  const ratio   = pdfW / (imgW / 2 * 0.264583);
-  const totalH  = (imgH / 2) * 0.264583;
+  for (const block of blocks) {
+    const canvas = await html2canvas(block, {
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      logging: false,
+    });
 
-  let yOffset = 0;
-  while (yOffset < totalH) {
-    if (yOffset > 0) pdf.addPage();
-    pdf.addImage(imgData, 'JPEG', 0, -yOffset, pdfW, totalH);
-    yOffset += pdfH;
+    const rendW = pdfW - margin * 2;
+    const rendH = (canvas.height / canvas.width) * rendW;
+
+    if (!firstPage && cursorY + rendH > pdfH - margin) {
+      pdf.addPage();
+      cursorY = margin;
+    }
+    firstPage = false;
+
+    if (rendH > pdfH - margin * 2) {
+      // Block taller than 1 page — slice it
+      const sliceHpx = Math.floor(((pdfH - margin * 2) / rendH) * canvas.height);
+      let startPx = 0;
+      while (startPx < canvas.height) {
+        const actualH = Math.min(sliceHpx, canvas.height - startPx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width  = canvas.width;
+        sliceCanvas.height = actualH;
+        sliceCanvas.getContext('2d').drawImage(canvas, 0, startPx, canvas.width, actualH, 0, 0, canvas.width, actualH);
+        const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.92);
+        const sliceRendH = (actualH / canvas.width) * rendW;
+        if (startPx > 0) { pdf.addPage(); cursorY = margin; }
+        pdf.addImage(sliceData, 'JPEG', margin, cursorY, rendW, sliceRendH);
+        cursorY += sliceRendH;
+        startPx += actualH;
+      }
+    } else {
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      pdf.addImage(imgData, 'JPEG', margin, cursorY, rendW, rendH);
+      cursorY += rendH;
+    }
   }
 
   pdf.save('DPR_Report.pdf');
