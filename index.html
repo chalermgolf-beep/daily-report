@@ -2585,141 +2585,101 @@ function goMorningScreen() {
 
 function printMorningPDF() {
   const today = new Date();
-  const dateLabel = today.toLocaleDateString('th-TH', {
-    weekday:'long', year:'numeric', month:'long', day:'numeric'
-  });
+  const dateLabel = today.toLocaleDateString('th-TH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
   const timeLabel = today.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
-
   const statusMap = {
-    ready: { cls:'#00B87A', bg:'#E6F9F3', label:'✓ พร้อม' },
-    partial: { cls:'#F07820', bg:'#FEF0E6', label:'⚠ บางส่วน' },
-    notready: { cls:'#E03535', bg:'#FDEAEA', label:'✗ ยังไม่พร้อม' },
-    na: { cls:'#8892A4', bg:'#F4F6FA', label:'— N/A' },
+    ready:    {cls:'#00B87A', bg:'#E6F9F3', label:'✓ พร้อม'},
+    partial:  {cls:'#F07820', bg:'#FEF0E6', label:'⚠ บางส่วน'},
+    notready: {cls:'#E03535', bg:'#FDEAEA', label:'✗ ยังไม่พร้อม'},
+    na:       {cls:'#8892A4', bg:'#F4F6FA', label:'— N/A'},
   };
-
   const itemLabels = {
-    safety:    { name:'Safety', sub:'ความปลอดภัย', icon:'🦺' },
-    permits:   { name:'Work Permit', sub:'ใบอนุญาตทำงาน', icon:'📝' },
-    method:    { name:'Method / SOP', sub:'วิธีการและขั้นตอน', icon:'📖' },
-    manpower:  { name:'Manpower', sub:'กำลังคน', icon:'👷' },
-    material:  { name:'Material', sub:'วัสดุ-อุปกรณ์', icon:'📦' },
-    machine:   { name:'Machine / Tool / Equip', sub:'เครื่องจักร/เครื่องมือ', icon:'🔧' },
-    sitecoord: { name:'Site Coordination', sub:'ประสานงานพื้นที่', icon:'🏗️' },
-    misc:      { name:'Miscellaneous', sub:'อื่นๆ', icon:'📌' },
+    safety:    {name:'Safety',                  sub:'ความปลอดภัย',          icon:'🦺'},
+    permits:   {name:'Work Permit',             sub:'ใบอนุญาตทำงาน',        icon:'📝'},
+    method:    {name:'Method / SOP',            sub:'วิธีการและขั้นตอน',    icon:'📖'},
+    manpower:  {name:'Manpower',                sub:'กำลังคน',              icon:'👷'},
+    material:  {name:'Material',                sub:'วัสดุ-อุปกรณ์',        icon:'📦'},
+    machine:   {name:'Machine / Tool / Equip',  sub:'เครื่องจักร/เครื่องมือ', icon:'🔧'},
+    sitecoord: {name:'Site Coordination',       sub:'ประสานงานพื้นที่',     icon:'🏗️'},
+    misc:      {name:'Miscellaneous',           sub:'อื่นๆ',                icon:'📌'},
   };
 
-  // Get notes from inputs
-  const notes = {};
-  MCK_ITEMS_LIST.forEach(id => {
-    const el = document.getElementById('mcknote_' + id);
-    notes[id] = el ? el.value : '';
+  var ckRows = '';
+  MCK_ITEMS_LIST.forEach(function(id) {
+    var st  = mckState[id] || 'ready';
+    var s   = statusMap[st];
+    var itm = itemLabels[id];
+    var noteEl = document.getElementById('mcknote_' + id);
+    var note = noteEl ? esc(noteEl.value) : '';
+    var imgs = document.querySelectorAll('#mckphotos_' + id + ' .mck-photo-thumb img');
+    var photoHtml = '';
+    if (imgs.length) {
+      photoHtml = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px">';
+      imgs.forEach(function(img) {
+        photoHtml += '<img src="' + img.src + '" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #E8ECF4">';
+      });
+      photoHtml += '</div>';
+    }
+    ckRows += '<tr>'
+      + '<td style="padding:10px 14px;border-bottom:1px solid #F0F4FA;vertical-align:top">'
+      + '<div style="font-size:14px;font-weight:700;color:#1A202C">' + itm.icon + ' ' + itm.name + '</div>'
+      + '<div style="font-size:11px;color:#8892A4;margin-top:2px">' + itm.sub + '</div>'
+      + (note ? '<div style="font-size:11px;color:#4A5568;margin-top:6px;padding:5px 8px;background:#F4F6FA;border-radius:4px;font-style:italic">' + note + '</div>' : '')
+      + photoHtml
+      + '</td>'
+      + '<td style="padding:10px 14px;border-bottom:1px solid #F0F4FA;text-align:center;vertical-align:top;width:130px">'
+      + '<span style="background:' + s.bg + ';color:' + s.cls + ';padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">' + s.label + '</span>'
+      + '</td>'
+      + '</tr>';
   });
 
-  // Get photos
-  const photos = {};
-  MCK_ITEMS_LIST.forEach(id => {
-    const imgs = document.querySelectorAll('#mckphotos_' + id + ' .mck-photo-thumb img');
-    photos[id] = [...imgs].map(img => img.src);
-  });
+  var doc = '<!DOCTYPE html><html lang="th"><head>'
+    + '<meta charset="UTF-8">'
+    + '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Sarabun,sans-serif;background:#fff;color:#1A202C;font-size:13px}.page{max-width:210mm;margin:0 auto;padding:10mm 12mm}@media print{.page{padding:8mm 10mm}}</style>'
+    + '</head><body><div class="page">'
+    + '<div style="background:linear-gradient(135deg,#0A1628 0%,#1E3A5F 60%,#1A6FD4 100%);border-radius:10px;padding:18px 22px;margin-bottom:14px;color:white">'
+    + '<div style="font-size:10px;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">TPS-SC Consortium · CHQ Data Center / Amata City (Rayong)</div>'
+    + '<div style="font-size:26px;font-weight:800;text-transform:uppercase">PRE-WORK</div>'
+    + '<div style="font-size:22px;font-weight:400;text-transform:uppercase;margin-bottom:6px">CHECKLIST</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.6)">ตรวจสอบความพร้อมก่อนเริ่มงาน</div>'
+    + '</div>'
+    + '<div style="background:#F4F6FA;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap">'
+    + '<div><div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.08em">วันที่</div><div style="font-size:13px;font-weight:600">' + dateLabel + '</div></div>'
+    + '<div><div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.08em">เวลากรอก</div><div style="font-size:13px;font-weight:600">' + timeLabel + '</div></div>'
+    + '</div>'
+    + '<table style="width:100%;border-collapse:collapse;border:1.5px solid #E8ECF4;overflow:hidden;margin-bottom:14px">'
+    + '<thead><tr style="background:#0A1628;color:white">'
+    + '<th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase">รายการตรวจสอบ</th>'
+    + '<th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;width:130px">สถานะ</th>'
+    + '</tr></thead>'
+    + '<tbody>' + ckRows + '</tbody>'
+    + '</table>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    + '<div style="border:1.5px solid #E8ECF4;border-radius:8px;padding:12px;text-align:center">'
+    + '<div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px">ผู้ตรวจสอบ / Checker</div>'
+    + '<div style="border-top:1.5px solid #4A5568;margin:0 10px 6px"></div>'
+    + '<div style="font-size:11px;color:#8892A4">ลายเซ็น</div>'
+    + '</div>'
+    + '<div style="border:1.5px solid #E8ECF4;border-radius:8px;padding:12px;text-align:center">'
+    + '<div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px">Safety Supervisor</div>'
+    + '<div style="border-top:1.5px solid #4A5568;margin:0 10px 6px"></div>'
+    + '<div style="font-size:11px;color:#8892A4">ลายเซ็น</div>'
+    + '</div>'
+    + '</div>'
+    + '<div style="text-align:center;font-size:10px;color:#8892A4;border-top:1px solid #E8ECF4;padding-top:8px">Pre-work Checklist | TPS-SC | ' + dateLabel + ' ' + timeLabel + '</div>'
+    + '</div>'
+    + '<script>window.onload=function(){if(!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){setTimeout(function(){window.print()},400);}}<\/script>'
+    + '</body></html>';
 
-  const ckRows = MCK_ITEMS_LIST.map(id => {
-    const st  = mckState[id] || 'ready';
-    const s   = statusMap[st];
-    const itm = itemLabels[id];
-    const note = notes[id] || '';
-    const ph  = photos[id] || [];
-    return \`<tr>
-      <td style="padding:10px 14px;border-bottom:1px solid #F0F4FA;vertical-align:top">
-        <div style="font-size:14px;font-weight:700;color:#1A202C">\${itm.icon} \${itm.name}</div>
-        <div style="font-size:11px;color:#8892A4;margin-top:2px">\${itm.sub}</div>
-        \${note ? \`<div style="font-size:11px;color:#4A5568;margin-top:6px;padding:5px 8px;background:#F4F6FA;border-radius:4px;font-style:italic">\${note}</div>\` : ''}
-        \${ph.length ? \`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:6px">\${ph.map(src => \`<img src="\${src}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;border:1px solid #E8ECF4">\`).join('')}</div>\` : ''}
-      </td>
-      <td style="padding:10px 14px;border-bottom:1px solid #F0F4FA;text-align:center;vertical-align:top;width:130px">
-        <span style="background:\${s.bg};color:\${s.cls};padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap">\${s.label}</span>
-      </td>
-    </tr>\`;
-  }).join('');
-
-  const html = \`<!DOCTYPE html><html lang="th"><head>
-<meta charset="UTF-8">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-* { box-sizing:border-box; margin:0; padding:0; }
-html { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-body { font-family:'Sarabun',sans-serif; background:#fff; color:#1A202C; font-size:13px; }
-.page { max-width:210mm; margin:0 auto; padding:10mm 12mm; }
-@media print { body { background:#fff; } .page { padding:8mm 10mm; } }
-</style></head><body>
-<div class="page">
-
-  <!-- Header -->
-  <div style="background:linear-gradient(135deg,#0A1628 0%,#1E3A5F 60%,#1A6FD4 100%);border-radius:10px;padding:18px 22px;margin-bottom:14px;color:white">
-    <div style="font-size:10px;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:.1em">TPS-SC Consortium · CHQ Data Center / Amata City (Rayong)</div>
-    <div style="font-size:26px;font-weight:800;line-height:1;text-transform:uppercase">PRE-WORK</div>
-    <div style="font-size:22px;font-weight:400;line-height:1;text-transform:uppercase;margin-bottom:6px">CHECKLIST</div>
-    <div style="font-size:11px;color:rgba(255,255,255,.6)">ตรวจสอบความพร้อมก่อนเริ่มงาน</div>
-  </div>
-
-  <!-- Meta -->
-  <div style="background:#F4F6FA;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap">
-    <div><div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.08em">วันที่</div><div style="font-size:13px;font-weight:600">\${dateLabel}</div></div>
-    <div><div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.08em">เวลากรอก</div><div style="font-size:13px;font-weight:600">\${timeLabel}</div></div>
-    <div><div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.08em">สัญญา</div><div style="font-size:13px;font-weight:600">TPS-SC</div></div>
-  </div>
-
-  <!-- Checklist Table -->
-  <table style="width:100%;border-collapse:collapse;border:1.5px solid #E8ECF4;border-radius:8px;overflow:hidden;margin-bottom:14px">
-    <thead>
-      <tr style="background:#0A1628;color:white">
-        <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">รายการตรวจสอบ</th>
-        <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;width:130px">สถานะ</th>
-      </tr>
-    </thead>
-    <tbody>\${ckRows}</tbody>
-  </table>
-
-  <!-- Signature -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-    <div style="border:1.5px solid #E8ECF4;border-radius:8px;padding:12px;text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px">ผู้ตรวจสอบ / Checker</div>
-      <div style="border-top:1.5px solid #4A5568;margin:0 10px 6px"></div>
-      <div style="font-size:11px;color:#8892A4">ลายเซ็น</div>
-    </div>
-    <div style="border:1.5px solid #E8ECF4;border-radius:8px;padding:12px;text-align:center">
-      <div style="font-size:9px;font-weight:700;color:#8892A4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px">Safety Supervisor</div>
-      <div style="border-top:1.5px solid #4A5568;margin:0 10px 6px"></div>
-      <div style="font-size:11px;color:#8892A4">ลายเซ็น</div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div style="text-align:center;font-size:10px;color:#8892A4;border-top:1px solid #E8ECF4;padding-top:8px">
-    Pre-work Checklist | TPS-SC Consortium | \${dateLabel} \${timeLabel}
-  </div>
-
-</div>
-<script>
-if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  window.onload = () => setTimeout(() => window.print(), 400);
-} else {
-  // Mobile: use jsPDF
-  window.onload = async () => {
-    await new Promise(r => setTimeout(r, 500));
-    window.print();
-  };
-}
-<\/script>
-</body></html>\`;
-
-  const win = window.open('', '_blank');
+  var win = window.open('', '_blank');
   if (win) {
-    win.document.write(html);
+    win.document.write(doc);
     win.document.close();
     showToast('⏳ กำลังสร้าง PDF...', '');
   } else {
-    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-    const a = document.createElement('a');
+    var blob = new Blob([doc], {type:'text/html;charset=utf-8'});
+    var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'PreWork_Checklist.html';
     a.click();
