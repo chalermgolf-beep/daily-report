@@ -660,16 +660,25 @@ input[type=range] {
 
 /* ── DASHBOARD ── */
 function goDashboard() {
-  // Hide everything else
+  // Hide ALL screens
   document.getElementById('mainContent').style.display = 'none';
   document.getElementById('submitFooter').style.display = 'none';
   document.getElementById('morningScreen').classList.remove('show');
-  document.getElementById('successScreen').classList.remove('show');
+  const success = document.getElementById('successScreen');
+  if (success) success.classList.remove('show');
+
+  // Hide all section panels explicitly
+  document.querySelectorAll('.section-panel').forEach(p => {
+    p.style.display = 'none';
+    p.classList.remove('active');
+  });
+
+  // Show dashboard
   document.getElementById('dashboardScreen').classList.add('show');
 
-  // Update nav tabs
+  // Update nav tab active state
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  // No active tab for dashboard
+  event && event.target && event.target.classList.add('active');
 
   loadDashboard();
   window.scrollTo({top:0, behavior:'smooth'});
@@ -679,9 +688,8 @@ function goBackFromDashboard() {
   document.getElementById('dashboardScreen').classList.remove('show');
   document.getElementById('mainContent').style.display = '';
   document.getElementById('submitFooter').style.display = '';
-  document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    if (i === 1) t.classList.add('active'); // ข้อมูลทั่วไป tab
-  });
+  // Restore section panels
+  goSection(currentSection);
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
