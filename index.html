@@ -1251,6 +1251,18 @@ input[type=range] {
       <hr class="divider">
 
       <div class="field">
+        <div class="field-label">สภาพอากาศ</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button type="button" class="chip sel" onclick="selWeather(this,'☀️ แดดจัด')">☀️ แดดจัด</button>
+          <button type="button" class="chip" onclick="selWeather(this,'⛅ มีเมฆ')">⛅ มีเมฆ</button>
+          <button type="button" class="chip" onclick="selWeather(this,'🌧️ ฝนตก')">🌧️ ฝนตก</button>
+          <button type="button" class="chip" onclick="selWeather(this,'⛈️ พายุ')">⛈️ พายุ</button>
+          <button type="button" class="chip" onclick="selWeather(this,'🌫️ หมอก')">🌫️ หมอก</button>
+        </div>
+        <input type="text" id="g_weather" placeholder="รายละเอียดเพิ่มเติม เช่น อุณหภูมิ 35°C">
+      </div>
+
+      <div class="field">
         <div class="field-label">เอกสารอ้างอิง <span class="tag tag-input">Doc Ref</span></div>
         <input type="text" id="g_docref" placeholder="เช่น P.N. Power Net">
       </div>
@@ -1369,6 +1381,11 @@ input[type=range] {
       </div>
 
       <div class="field">
+        <div class="field-label">ผลงานที่ทำได้วันนี้ <span class="tag tag-input">Work Done</span></div>
+        <textarea id="p_workdone" rows="3" placeholder="อธิบายสิ่งที่ทำสำเร็จในวันนี้ เช่น Water Jet เสร็จ 4 จุด ได้แก่ จุด PB#031-PB#034 พร้อมทดสอบแรงดัน..."></textarea>
+      </div>
+
+      <div class="field">
         <div class="field-label">กำลังคน <span class="req">*</span></div>
         <div class="field-row-3">
           <div>
@@ -1476,6 +1493,18 @@ input[type=range] {
     <div class="card-body">
 
       <div class="field">
+        <div class="field-label">สรุปประเมินสถานการณ์งาน <span class="tag tag-input">Assessment</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button type="button" class="chip sel" onclick="selAssess(this,'🟢 เป็นไปตามแผน')">🟢 เป็นไปตามแผน</button>
+          <button type="button" class="chip" onclick="selAssess(this,'🟡 ล่าช้าเล็กน้อย')">🟡 ล่าช้าเล็กน้อย</button>
+          <button type="button" class="chip" onclick="selAssess(this,'🔴 ล่าช้ามาก')">🔴 ล่าช้ามาก</button>
+          <button type="button" class="chip" onclick="selAssess(this,'⚡ เร็วกว่าแผน')">⚡ เร็วกว่าแผน</button>
+        </div>
+        <input type="hidden" id="p_assess_val" value="🟢 เป็นไปตามแผน">
+        <textarea id="p_assessment" rows="2" placeholder="อธิบายสถานการณ์โดยรวม ความเสี่ยง หรือปัจจัยที่กระทบแผนงาน..."></textarea>
+      </div>
+
+      <div class="field">
         <div class="field-label">แผนงานพรุ่งนี้ <span class="req">*</span></div>
         <textarea id="tmr_plan" rows="4"
           placeholder="ระบุแผนงานพรุ่งนี้...">เริ่มงาน 09.00 ตั้งเป้าหมายไว้ทั้งหมด 10 จุด</textarea>
@@ -1513,6 +1542,30 @@ input[type=range] {
         <div class="pu-sub">กดเพื่อเลือก · รองรับหลายภาพ · JPG, PNG</div>
       </div>
       <div class="photo-grid" id="photoGrid"></div>
+    </div>
+  </div>
+
+  <!-- รูปภาพเปิด Work พรุ่งนี้ -->
+  <div class="section-card">
+    <div class="card-header" style="background:linear-gradient(135deg,#1A3A2A 0%,#1A6FD4 100%)">
+      <div class="card-icon">🔭</div>
+      <div class="card-title-wrap">
+        <div class="card-title">รูปภาพเปิด Work พรุ่งนี้</div>
+        <div class="card-subtitle">Tomorrow Work Photos</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <div class="field-label">รูปภาพสำหรับการเปิดงานพรุ่งนี้ <span class="tag tag-input">optional</span></div>
+        <div class="photo-upload-area" onclick="document.getElementById('tmrPhotoInput').click()">
+          <div class="pu-icon">🔭</div>
+          <div class="pu-text">ถ่ายภาพ หรือ เลือกจากคลัง</div>
+          <div class="pu-sub">เตรียมพื้นที่ / จุดที่จะทำงานพรุ่งนี้</div>
+          <input type="file" id="tmrPhotoInput" accept="image/*" multiple style="display:none"
+            onchange="addTmrPhotos(this)">
+        </div>
+        <div class="photo-grid" id="tmrPhotoGrid"></div>
+      </div>
     </div>
   </div>
 
@@ -1767,6 +1820,22 @@ function updateProgress(type, val) {
 }
 
 /* ── CHIP TOGGLE ── */
+function selAssess(btn, val) {
+  btn.closest('div').querySelectorAll('.chip').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  // Store in hidden field
+  var el = document.getElementById('p_assessment');
+  if (el && !el.value) el.placeholder = val + ' — อธิบายเพิ่มเติม...';
+  document.getElementById('p_assess_val').value = val;
+}
+
+function selWeather(btn, val) {
+  // Single select for weather
+  btn.closest('div').querySelectorAll('.chip').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('g_weather').value = val;
+}
+
 function toggleChip(btn) { btn.classList.toggle('sel'); }
 
 /* ── PHOTOS ── */
@@ -1783,6 +1852,21 @@ function compressImage(dataUrl, maxW, maxH, quality) {
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.src = dataUrl;
+  });
+}
+
+function addTmrPhotos(input) {
+  const grid = document.getElementById('tmrPhotoGrid');
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const compressed = await compressImage(e.target.result, 800, 600, 0.65);
+      const div = document.createElement('div');
+      div.className = 'photo-thumb';
+      div.innerHTML = '<img src="' + compressed + '" alt="photo"><button class="del-btn" onclick="this.parentElement.remove()">✕</button>';
+      grid.appendChild(div);
+    };
+    reader.readAsDataURL(file);
   });
 }
 
@@ -1839,6 +1923,7 @@ function collectData() {
     activity: document.getElementById('g_activity').value,
     timeStart: document.getElementById('g_timeStart').value,
     timeEnd: document.getElementById('g_timeEnd').value,
+    weather: document.getElementById('g_weather')?.value || '☀️ แดดจัด',
     docRef: document.getElementById('g_docref').value,
     preparedBy: document.getElementById('g_preparedBy').value,
     checklist,
@@ -1848,6 +1933,7 @@ function collectData() {
     pctDay: document.getElementById('pct_day').value,
     pctCum: document.getElementById('pct_cum').value,
     qtyToday: document.getElementById('qty_today').value,
+    workDone: document.getElementById('p_workdone')?.value || '',
     qtyCum: document.getElementById('qty_cum').value,
     manSafety: document.getElementById('man_safety')?.value || 0,
     manSuper: document.getElementById('man_super')?.value || 0,
@@ -1861,6 +1947,8 @@ function collectData() {
     issueAction: document.getElementById('iss_action').value,
     siteCoord,
     miscNote: document.getElementById('misc_note').value,
+    assessment: document.getElementById('p_assess_val')?.value || '',
+    assessmentNote: document.getElementById('p_assessment')?.value || '',
     tmrPlan: document.getElementById('tmr_plan').value,
     tmrTarget: document.getElementById('tmr_target').value,
     tmrNote: document.getElementById('tmr_note').value,
@@ -1869,6 +1957,7 @@ function collectData() {
     sig3: document.getElementById('sig3').value,
     sig4: document.getElementById('sig4').value,
     photos: [...new Set([...document.querySelectorAll('#photoGrid .photo-thumb img')].map(img => img.src))],
+    tmrPhotos: [...new Set([...document.querySelectorAll('#tmrPhotoGrid .photo-thumb img')].map(img => img.src))],
   };
 }
 
@@ -2147,6 +2236,7 @@ body { font-family:'Sarabun',sans-serif; background:#E8EEF8; color:#0A1628; font
     <div class="meta-item"><div class="mi-lbl">Zone / Area</div><div class="mi-val">${esc(data.zone)||'—'}</div></div>
     <div class="meta-item"><div class="mi-lbl">เวลา</div><div class="mi-val">${esc(data.timeStart)||'—'} – ${esc(data.timeEnd)||'—'}</div></div>
     <div class="meta-item"><div class="mi-lbl">Prepared By</div><div class="mi-val">${esc(data.preparedBy)||'—'}</div></div>
+    <div class="meta-item"><div class="mi-lbl">สภาพอากาศ</div><div class="mi-val">${esc(data.weather)||'—'}</div></div>
   </div>
 
   <div class="body">
@@ -2217,6 +2307,7 @@ body { font-family:'Sarabun',sans-serif; background:#E8EEF8; color:#0A1628; font
         <div><div class="field-lbl">ปริมาณงานวันนี้</div><div class="field-val" style="font-size:16px;font-weight:800">${esc(data.qtyToday)||'—'}</div></div>
         <div><div class="field-lbl">ปริมาณงานสะสม</div><div class="field-val" style="font-size:16px;font-weight:800">${esc(data.qtyCum)||'—'}</div></div>
       </div>
+      ${data.workDone ? '<div class="field-full"><div class="field-lbl">ผลงานที่ทำได้วันนี้</div><div class="field-val tall">' + esc(data.workDone) + '</div></div>' : ''}
     </div>
 
     <!-- SECTION 4 -->
@@ -2238,6 +2329,7 @@ body { font-family:'Sarabun',sans-serif; background:#E8EEF8; color:#0A1628; font
     <!-- SECTION 5 -->
     <div class="section">
       <div class="sec-label">5. Tomorrow's Plan / แผนพรุ่งนี้</div>
+      ${data.assessment ? '<div class="field-full"><div class="field-lbl">สรุปประเมินสถานการณ์</div><div class="field-val" style="font-size:14px;font-weight:700">' + esc(data.assessment) + (data.assessmentNote ? ' — ' + esc(data.assessmentNote) : '') + '</div></div>' : ''}
       <div class="field-full"><div class="field-lbl">แผนงาน</div><div class="field-val tall">${esc(data.tmrPlan)||'—'}</div></div>
       <div class="field-row">
         <div><div class="field-lbl">เป้าหมายปริมาณงาน</div><div class="field-val">${esc(data.tmrTarget)||'—'}</div></div>
@@ -2251,6 +2343,14 @@ body { font-family:'Sarabun',sans-serif; background:#E8EEF8; color:#0A1628; font
       <div class="sec-label">6. Progress Photos / ภาพประกอบ</div>
       <div class="photo-grid">
         ${data.photos.map(src => `<img src="${src}" alt="photo">`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${data.tmrPhotos && data.tmrPhotos.length ? `
+    <div class="section">
+      <div class="sec-label">รูปภาพเปิด Work พรุ่งนี้ / <em>Tomorrow Work Photos</em></div>
+      <div class="photo-grid">
+        ${data.tmrPhotos.map(src => '<img src="' + src + '" alt="photo">').join('')}
       </div>
     </div>` : ''}
 
