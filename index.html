@@ -568,97 +568,6 @@ input[type=range] {
 }
 
 /* ── DASHBOARD ── */
-.dashboard-screen {
-  display: none;
-  padding: 16px;
-  max-width: 520px;
-  margin: 0 auto;
-  animation: slideUp .25s ease;
-}
-.dashboard-screen.show { display: block; }
-
-.dash-header {
-  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  color: white;
-  margin-bottom: 14px;
-  display: flex; align-items: center; gap: 12px;
-}
-.dash-header .dh-icon { font-size: 28px; }
-.dash-header h2 { font-size: 16px; font-weight: 700; }
-.dash-header p  { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
-.dash-header .dh-refresh {
-  margin-left: auto; flex-shrink: 0;
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 20px; padding: 5px 12px;
-  font-size: 11px; font-weight: 600;
-  color: white; cursor: pointer; font-family: inherit;
-}
-
-.dash-kpi-row {
-  display: grid; grid-template-columns: 1fr 1fr 1fr;
-  gap: 10px; margin-bottom: 14px;
-}
-.dash-kpi {
-  background: white; border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm); padding: 14px 12px;
-  text-align: center;
-}
-.dash-kpi .dk-num { font-size: 28px; font-weight: 700; line-height: 1; }
-.dash-kpi .dk-lbl { font-size: 10px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
-.dash-kpi.done  .dk-num { color: var(--green); }
-.dash-kpi.total .dk-num { color: var(--navy); }
-.dash-kpi.pct   .dk-num { color: var(--blue); }
-
-.dash-section-title {
-  font-size: 11px; font-weight: 700; color: var(--gray-700);
-  text-transform: uppercase; letter-spacing: .06em;
-  margin-bottom: 8px; padding-bottom: 6px;
-  border-bottom: 2px solid var(--gray-200);
-  display: flex; align-items: center; gap: 6px;
-}
-
-.dash-report-card {
-  background: white; border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm); overflow: hidden;
-  margin-bottom: 8px;
-}
-.dash-report-row {
-  display: flex; align-items: center;
-  padding: 12px 14px; gap: 10px;
-  border-bottom: 1px solid var(--gray-200);
-}
-.dash-report-row:last-child { border-bottom: none; }
-.dr-status {
-  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
-.dr-status.submitted { background: var(--green); }
-.dr-status.pending   { background: var(--gray-300); }
-.dr-info { flex: 1; }
-.dr-info .dr-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
-.dr-info .dr-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
-.dr-badge {
-  font-size: 10px; font-weight: 700; padding: 3px 10px;
-  border-radius: 20px; flex-shrink: 0;
-}
-.dr-badge.done    { background: var(--green-soft); color: var(--green); }
-.dr-badge.pending { background: var(--gray-200); color: var(--gray-500); }
-.dr-badge.issue   { background: var(--red-soft); color: var(--red); }
-
-.dash-empty {
-  text-align: center; padding: 40px 20px;
-  color: var(--gray-500); font-size: 13px;
-}
-.dash-empty .de-icon { font-size: 40px; margin-bottom: 10px; }
-
-.dash-loading {
-  text-align: center; padding: 30px;
-  color: var(--gray-500); font-size: 13px;
-}
-
-/* ── DASHBOARD ── */
 function goDashboard() {
   // Hide ALL screens
   document.getElementById('mainContent').style.display = 'none';
@@ -688,121 +597,115 @@ function goBackFromDashboard() {
   document.getElementById('dashboardScreen').classList.remove('show');
   document.getElementById('mainContent').style.display = '';
   document.getElementById('submitFooter').style.display = '';
-  // Restore section panels
   goSection(currentSection);
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
-async function loadDashboard() {
-  const today = new Date();
-  const todayStr = today.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-  const todayDate = today.toISOString().split('T')[0];
+function loadDashboard() {
+  const today     = new Date();
+  const todayStr  = today.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const todayDate = today.toDateString();
 
   document.getElementById('dashDateLabel').textContent = todayStr;
-  document.getElementById('dashTodayList').innerHTML = '<div class="dash-loading">⏳ กำลังโหลด...</div>';
-  document.getElementById('dashRecentList').innerHTML = '<div class="dash-loading">⏳ กำลังโหลด...</div>';
 
+  // ── Step 1: Pre-work Checklist ──
+  let morningDone = false;
+  let morningTime = '';
   try {
-    // Fetch from Google Sheet via JSONP
-    const data = await fetchSheetData();
-    if (!data || !data.reports) {
-      showDashboardError();
-      return;
+    const m = JSON.parse(localStorage.getItem(MCK_KEY) || 'null');
+    if (m && m.date === todayDate) {
+      morningDone = true;
+      morningTime = m.savedAt ? new Date(m.savedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
     }
+  } catch(e) {}
 
-    const reports = data.reports;
+  // ── Step 2: รายงานประจำวัน ──
+  let reportDone = false;
+  let reportTime = '';
+  let reportName = '';
+  let reportIssue = false;
+  try {
+    const reports = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    const todayReport = reports.find(r => r.date === today.toISOString().split('T')[0]);
+    if (todayReport) {
+      reportDone  = true;
+      reportTime  = todayReport.generatedAt ? new Date(todayReport.generatedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
+      reportName  = todayReport.preparedBy || '';
+      reportIssue = todayReport.hasIssue || false;
+    }
+  } catch(e) {}
 
-    // Filter today's reports
-    const todayReports = reports.filter(r => r.date === todayDate);
-    const recentReports = reports.filter(r => r.date !== todayDate).slice(0, 20);
+  // ── Render Steps ──
+  const steps = [
+    {
+      icon: '🌅',
+      label: 'Pre-work Checklist',
+      sub: 'ตรวจสอบความพร้อมก่อนเริ่มงาน',
+      done: morningDone,
+      time: morningTime,
+      action: morningDone ? null : 'goMorningScreen()',
+      actionLabel: 'กรอกเลย',
+    },
+    {
+      icon: '📋',
+      label: 'รายงานประจำวัน',
+      sub: reportDone ? (reportName + (reportIssue ? ' · ⚠️ มีปัญหา' : ' · ✅ ปกติ')) : 'กรอกรายละเอียดงานวันนี้',
+      done: reportDone,
+      time: reportTime,
+      action: reportDone ? null : 'goBackFromDashboard()',
+      actionLabel: 'กรอกเลย',
+    },
+  ];
 
-    // KPI
-    document.getElementById('dashDoneCount').textContent = todayReports.length;
-    document.getElementById('dashTotalCount').textContent = reports.length;
-    const pct = reports.length > 0 ? Math.round(todayReports.length / Math.max(reports.length, 1) * 100) : 0;
-    document.getElementById('dashPct').textContent = todayReports.length + '/' + reports.length;
+  document.getElementById('dashStepList').innerHTML = steps.map((s, i) => `
+    <div class="dash-report-row" style="padding:14px 16px">
+      <div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:${s.done ? 'var(--green-soft)' : 'var(--gray-100)'}">
+        ${s.done ? '✅' : s.icon}
+      </div>
+      <div class="dr-info" style="margin-left:4px">
+        <div class="dr-name">${s.label}</div>
+        <div class="dr-meta">${s.sub}</div>
+      </div>
+      ${s.done
+        ? `<div style="text-align:right;flex-shrink:0">
+             <div style="font-size:11px;font-weight:700;color:var(--green)">เสร็จแล้ว</div>
+             <div style="font-size:10px;color:var(--gray-500)">${s.time}</div>
+           </div>`
+        : `<button onclick="${s.action}" style="flex-shrink:0;background:var(--blue);color:white;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">${s.actionLabel}</button>`
+      }
+    </div>
+  `).join('<div style="height:1px;background:var(--gray-200);margin:0 16px"></div>');
 
-    // Today list
-    if (todayReports.length === 0) {
-      document.getElementById('dashTodayList').innerHTML = `
-        <div class="dash-empty">
-          <div class="de-icon">📋</div>
-          <div>ยังไม่มีรายงานวันนี้</div>
+  // ── History ──
+  try {
+    const reports = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+    if (!reports.length) {
+      document.getElementById('dashHistoryList').innerHTML =
+        '<div class="dash-empty"><div class="de-icon">🗂️</div><div>ยังไม่มีประวัติรายงาน</div></div>';
+    } else {
+      document.getElementById('dashHistoryList').innerHTML = reports.slice(0,10).map(r => {
+        const dt = new Date(r.generatedAt);
+        const dateStr = dt.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+        const timeStr = dt.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+        return `<div class="dash-report-row">
+          <div class="dr-status submitted"></div>
+          <div class="dr-info">
+            <div class="dr-name">${dateStr} ${timeStr} · ${esc(r.team)||'—'}</div>
+            <div class="dr-meta">${esc(r.zone)||'—'} · ${esc(r.workTypes?.join(', '))||'—'} · ${r.pctCum||0}% สะสม</div>
+          </div>
+          <span class="dr-badge ${r.hasIssue ? 'issue' : 'done'}">${r.hasIssue ? '⚠ มีปัญหา' : '✅ ปกติ'}</span>
         </div>`;
-    } else {
-      document.getElementById('dashTodayList').innerHTML =
-        '<div class="dash-report-card">' +
-        todayReports.map(r => renderReportRow(r, true)).join('') +
-        '</div>';
+      }).join('<div style="height:1px;background:var(--gray-200);margin:0 16px"></div>');
     }
-
-    // Recent list
-    if (recentReports.length === 0) {
-      document.getElementById('dashRecentList').innerHTML =
-        '<div class="dash-empty"><div class="de-icon">🗂️</div><div>ยังไม่มีข้อมูล</div></div>';
-    } else {
-      // Group by date
-      const byDate = {};
-      recentReports.forEach(r => {
-        if (!byDate[r.date]) byDate[r.date] = [];
-        byDate[r.date].push(r);
-      });
-      let html = '';
-      Object.entries(byDate).slice(0,7).forEach(([date, rows]) => {
-        const dateLabel = date ? new Date(date+'T00:00:00').toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'}) : date;
-        html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);margin:10px 0 6px">${dateLabel} · ${rows.length} รายงาน</div>`;
-        html += '<div class="dash-report-card">' + rows.map(r => renderReportRow(r, false)).join('') + '</div>';
-      });
-      document.getElementById('dashRecentList').innerHTML = html;
-    }
-
   } catch(e) {
-    console.error('Dashboard error:', e);
-    showDashboardError();
+    document.getElementById('dashHistoryList').innerHTML =
+      '<div class="dash-empty"><div class="de-icon">⚠️</div><div>ไม่สามารถโหลดประวัติได้</div></div>';
   }
 }
 
-function renderReportRow(r, isToday) {
-  const hasIssue = r.hasIssue === 'มี';
-  const badge = hasIssue
-    ? '<span class="dr-badge issue">⚠ มีปัญหา</span>'
-    : '<span class="dr-badge done">✅ ส่งแล้ว</span>';
-  const time = r.savedAt ? new Date(r.savedAt).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
-  return `<div class="dash-report-row">
-    <div class="dr-status submitted"></div>
-    <div class="dr-info">
-      <div class="dr-name">${r.preparedBy||'—'} · ${r.team||'—'}</div>
-      <div class="dr-meta">${r.zone||'—'} · ${r.workType||'—'}${time ? ' · ' + time : ''}</div>
-    </div>
-    ${badge}
-  </div>`;
-}
-
-function showDashboardError() {
-  const msg = '<div class="dash-empty"><div class="de-icon">⚠️</div><div>ไม่สามารถโหลดข้อมูลได้<br><small>ตรวจสอบการเชื่อมต่อ Internet</small></div></div>';
-  document.getElementById('dashTodayList').innerHTML = msg;
-  document.getElementById('dashRecentList').innerHTML = '';
-  document.getElementById('dashDoneCount').textContent = '?';
-  document.getElementById('dashTotalCount').textContent = '?';
-  document.getElementById('dashPct').textContent = '?';
-}
-
-function fetchSheetData() {
-  return new Promise((resolve, reject) => {
-    if (!GAS_URL) { reject('No GAS_URL'); return; }
-    const cbName = 'dashCb_' + Date.now();
-    const script = document.createElement('script');
-    script.src = GAS_URL + '?action=dashboard&callback=' + cbName + '&t=' + Date.now();
-    window[cbName] = (data) => {
-      delete window[cbName];
-      script.remove();
-      resolve(data);
-    };
-    script.onerror = () => { delete window[cbName]; script.remove(); reject('Script error'); };
-    document.head.appendChild(script);
-    setTimeout(() => { if (window[cbName]) { delete window[cbName]; script.remove(); reject('Timeout'); } }, 10000);
-  });
-}
+function showDashboardError() {}
+function fetchSheetData() { return Promise.reject('not used'); }
+function renderReportRow() { return ''; }
 
 /* ── MORNING CHECKLIST ── */
 .morning-screen {
@@ -1406,39 +1309,17 @@ function fetchSheetData() {
   <div class="dash-header">
     <div class="dh-icon">📊</div>
     <div>
-      <h2>Daily Report Dashboard</h2>
-      <p id="dashDateLabel">กำลังโหลด...</p>
-    </div>
-    <button class="dh-refresh" onclick="loadDashboard()">🔄 รีเฟรช</button>
-  </div>
-
-  <!-- KPI -->
-  <div class="dash-kpi-row">
-    <div class="dash-kpi done">
-      <div class="dk-num" id="dashDoneCount">—</div>
-      <div class="dk-lbl">ส่งแล้ว</div>
-    </div>
-    <div class="dash-kpi total">
-      <div class="dk-num" id="dashTotalCount">—</div>
-      <div class="dk-lbl">ทั้งหมด</div>
-    </div>
-    <div class="dash-kpi pct">
-      <div class="dk-num" id="dashPct">—</div>
-      <div class="dk-lbl">เสร็จ</div>
+      <h2>สถานะวันนี้</h2>
+      <p id="dashDateLabel">—</p>
     </div>
   </div>
 
-  <!-- Today's reports -->
-  <div class="dash-section-title">📅 รายงานวันนี้</div>
-  <div id="dashTodayList">
-    <div class="dash-loading">⏳ กำลังโหลด...</div>
-  </div>
+  <!-- Personal status steps -->
+  <div class="dash-report-card" id="dashStepList" style="margin-bottom:14px"></div>
 
-  <!-- Recent reports -->
-  <div class="dash-section-title" style="margin-top:16px">🕐 7 วันล่าสุด</div>
-  <div id="dashRecentList">
-    <div class="dash-loading">⏳ กำลังโหลด...</div>
-  </div>
+  <!-- History -->
+  <div class="dash-section-title">🕐 ประวัติรายงาน</div>
+  <div id="dashHistoryList" class="dash-report-card"></div>
 
   <button onclick="goBackFromDashboard()" style="width:100%;margin-top:16px;padding:13px;background:var(--navy);color:white;border:none;border-radius:var(--radius-md);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">
     ← กลับไปกรอกรายงาน
