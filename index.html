@@ -902,7 +902,7 @@ input[type=range] {
     <div class="progress-fill" id="progressFill" style="width:17%"></div>
   </div>
   <nav class="section-nav">
-    <button class="nav-tab" id="navMorning" onclick="goMorningScreen()" style="display:none"><span class="tab-dot" style="background:var(--green)"></span> 🌅 เช้า</button>
+    <button class="nav-tab" id="navMorning" onclick="goMorningScreen()"><span class="tab-dot" style="background:var(--green)"></span> 🌅 เช้า</button>
     <button class="nav-tab active" onclick="goSection(0)"><span class="tab-dot"></span> ข้อมูลทั่วไป</button>
     <button class="nav-tab" onclick="goSection(1)"><span class="tab-dot"></span> Checklist</button>
     <button class="nav-tab" onclick="goSection(2)"><span class="tab-dot"></span> ความคืบหน้า</button>
@@ -1655,7 +1655,11 @@ function setCK(btn) {
 function initDate() {
   const now   = new Date();
   const dateEl= document.getElementById('g_date');
-  dateEl.valueAsDate = now;
+  // Use string format for better mobile compatibility
+  const yyyy = now.getFullYear();
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const dd   = String(now.getDate()).padStart(2,'0');
+  dateEl.value = yyyy + '-' + mm + '-' + dd;
   updateDate();
 
   setInterval(() => {
