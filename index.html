@@ -567,6 +567,412 @@ input[type=range] {
   box-shadow: 0 2px 8px rgba(26,111,212,.3);
 }
 
+/* ── DASHBOARD ── */
+.dashboard-screen {
+  display: none;
+  padding: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  animation: slideUp .25s ease;
+}
+.dashboard-screen.show { display: block; }
+
+.dash-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  color: white;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.dash-header .dh-icon { font-size: 28px; }
+.dash-header h2 { font-size: 16px; font-weight: 700; }
+.dash-header p  { font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.dash-header .dh-refresh {
+  margin-left: auto; flex-shrink: 0;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 11px; font-weight: 600;
+  color: white; cursor: pointer; font-family: inherit;
+}
+
+.dash-kpi-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px; margin-bottom: 14px;
+}
+.dash-kpi {
+  background: white; border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm); padding: 14px 12px;
+  text-align: center;
+}
+.dash-kpi .dk-num { font-size: 28px; font-weight: 700; line-height: 1; }
+.dash-kpi .dk-lbl { font-size: 10px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+.dash-kpi.done  .dk-num { color: var(--green); }
+.dash-kpi.total .dk-num { color: var(--navy); }
+.dash-kpi.pct   .dk-num { color: var(--blue); }
+
+.dash-section-title {
+  font-size: 11px; font-weight: 700; color: var(--gray-700);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 8px; padding-bottom: 6px;
+  border-bottom: 2px solid var(--gray-200);
+  display: flex; align-items: center; gap: 6px;
+}
+
+.dash-report-card {
+  background: white; border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm); overflow: hidden;
+  margin-bottom: 8px;
+}
+.dash-report-row {
+  display: flex; align-items: center;
+  padding: 12px 14px; gap: 10px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.dash-report-row:last-child { border-bottom: none; }
+.dr-status {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.dr-status.submitted { background: var(--green); }
+.dr-status.pending   { background: var(--gray-300); }
+.dr-info { flex: 1; }
+.dr-info .dr-name { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+.dr-info .dr-meta { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+.dr-badge {
+  font-size: 10px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.dr-badge.done    { background: var(--green-soft); color: var(--green); }
+.dr-badge.pending { background: var(--gray-200); color: var(--gray-500); }
+.dr-badge.issue   { background: var(--red-soft); color: var(--red); }
+
+.dash-empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--gray-500); font-size: 13px;
+}
+.dash-empty .de-icon { font-size: 40px; margin-bottom: 10px; }
+
+.dash-loading {
+  text-align: center; padding: 30px;
+  color: var(--gray-500); font-size: 13px;
+}
+
+/* ── DASHBOARD ── */
+function goDashboard() {
+  // Hide everything else
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('submitFooter').style.display = 'none';
+  document.getElementById('morningScreen').classList.remove('show');
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('dashboardScreen').classList.add('show');
+
+  // Update nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  // No active tab for dashboard
+
+  loadDashboard();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function goBackFromDashboard() {
+  document.getElementById('dashboardScreen').classList.remove('show');
+  document.getElementById('mainContent').style.display = '';
+  document.getElementById('submitFooter').style.display = '';
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    if (i === 1) t.classList.add('active'); // ข้อมูลทั่วไป tab
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function loadDashboard() {
+  const today = new Date();
+  const todayStr = today.toLocaleDateString('th-TH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const todayDate = today.toISOString().split('T')[0];
+
+  document.getElementById('dashDateLabel').textContent = todayStr;
+  document.getElementById('dashTodayList').innerHTML = '<div class="dash-loading">⏳ กำลังโหลด...</div>';
+  document.getElementById('dashRecentList').innerHTML = '<div class="dash-loading">⏳ กำลังโหลด...</div>';
+
+  try {
+    // Fetch from Google Sheet via JSONP
+    const data = await fetchSheetData();
+    if (!data || !data.reports) {
+      showDashboardError();
+      return;
+    }
+
+    const reports = data.reports;
+
+    // Filter today's reports
+    const todayReports = reports.filter(r => r.date === todayDate);
+    const recentReports = reports.filter(r => r.date !== todayDate).slice(0, 20);
+
+    // KPI
+    document.getElementById('dashDoneCount').textContent = todayReports.length;
+    document.getElementById('dashTotalCount').textContent = reports.length;
+    const pct = reports.length > 0 ? Math.round(todayReports.length / Math.max(reports.length, 1) * 100) : 0;
+    document.getElementById('dashPct').textContent = todayReports.length + '/' + reports.length;
+
+    // Today list
+    if (todayReports.length === 0) {
+      document.getElementById('dashTodayList').innerHTML = `
+        <div class="dash-empty">
+          <div class="de-icon">📋</div>
+          <div>ยังไม่มีรายงานวันนี้</div>
+        </div>`;
+    } else {
+      document.getElementById('dashTodayList').innerHTML =
+        '<div class="dash-report-card">' +
+        todayReports.map(r => renderReportRow(r, true)).join('') +
+        '</div>';
+    }
+
+    // Recent list
+    if (recentReports.length === 0) {
+      document.getElementById('dashRecentList').innerHTML =
+        '<div class="dash-empty"><div class="de-icon">🗂️</div><div>ยังไม่มีข้อมูล</div></div>';
+    } else {
+      // Group by date
+      const byDate = {};
+      recentReports.forEach(r => {
+        if (!byDate[r.date]) byDate[r.date] = [];
+        byDate[r.date].push(r);
+      });
+      let html = '';
+      Object.entries(byDate).slice(0,7).forEach(([date, rows]) => {
+        const dateLabel = date ? new Date(date+'T00:00:00').toLocaleDateString('th-TH', {day:'numeric', month:'short', year:'2-digit'}) : date;
+        html += `<div style="font-size:11px;font-weight:700;color:var(--gray-500);margin:10px 0 6px">${dateLabel} · ${rows.length} รายงาน</div>`;
+        html += '<div class="dash-report-card">' + rows.map(r => renderReportRow(r, false)).join('') + '</div>';
+      });
+      document.getElementById('dashRecentList').innerHTML = html;
+    }
+
+  } catch(e) {
+    console.error('Dashboard error:', e);
+    showDashboardError();
+  }
+}
+
+function renderReportRow(r, isToday) {
+  const hasIssue = r.hasIssue === 'มี';
+  const badge = hasIssue
+    ? '<span class="dr-badge issue">⚠ มีปัญหา</span>'
+    : '<span class="dr-badge done">✅ ส่งแล้ว</span>';
+  const time = r.savedAt ? new Date(r.savedAt).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '';
+  return `<div class="dash-report-row">
+    <div class="dr-status submitted"></div>
+    <div class="dr-info">
+      <div class="dr-name">${r.preparedBy||'—'} · ${r.team||'—'}</div>
+      <div class="dr-meta">${r.zone||'—'} · ${r.workType||'—'}${time ? ' · ' + time : ''}</div>
+    </div>
+    ${badge}
+  </div>`;
+}
+
+function showDashboardError() {
+  const msg = '<div class="dash-empty"><div class="de-icon">⚠️</div><div>ไม่สามารถโหลดข้อมูลได้<br><small>ตรวจสอบการเชื่อมต่อ Internet</small></div></div>';
+  document.getElementById('dashTodayList').innerHTML = msg;
+  document.getElementById('dashRecentList').innerHTML = '';
+  document.getElementById('dashDoneCount').textContent = '?';
+  document.getElementById('dashTotalCount').textContent = '?';
+  document.getElementById('dashPct').textContent = '?';
+}
+
+function fetchSheetData() {
+  return new Promise((resolve, reject) => {
+    if (!GAS_URL) { reject('No GAS_URL'); return; }
+    const cbName = 'dashCb_' + Date.now();
+    const script = document.createElement('script');
+    script.src = GAS_URL + '?action=dashboard&callback=' + cbName + '&t=' + Date.now();
+    window[cbName] = (data) => {
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+    script.onerror = () => { delete window[cbName]; script.remove(); reject('Script error'); };
+    document.head.appendChild(script);
+    setTimeout(() => { if (window[cbName]) { delete window[cbName]; script.remove(); reject('Timeout'); } }, 10000);
+  });
+}
+
+/* ── MORNING CHECKLIST ── */
+.morning-screen {
+  display: none;
+  padding: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  animation: slideUp .25s ease;
+}
+.morning-screen.show { display: block; }
+
+.morning-header {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-soft) 100%);
+  border-radius: var(--radius-lg);
+  padding: 20px 20px 16px;
+  color: white;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.morning-header .mh-icon { font-size: 36px; margin-bottom: 8px; }
+.morning-header h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.morning-header p  { font-size: 12px; color: rgba(255,255,255,.6); }
+
+.morning-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.morning-card .mc-header {
+  padding: 12px 16px;
+  background: var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
+  display: flex; align-items: center; gap: 10px;
+}
+.morning-card .mc-icon { font-size: 20px; }
+.morning-card .mc-title { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+.morning-card .mc-sub   { font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+
+.mck-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gray-200);
+  gap: 10px;
+}
+.mck-row:last-child { border-bottom: none; }
+.mck-info { flex: 1; }
+.mck-info .mck-name { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.mck-info .mck-sub  { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+.mck-btns { display: flex; gap: 4px; flex-shrink: 0; }
+.mck-btn {
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  border: 1.5px solid transparent;
+  cursor: pointer; font-family: inherit;
+  transition: .15s; white-space: nowrap;
+}
+.mck-ready    { background: var(--green-soft); color: var(--green); border-color: var(--green-soft); }
+.mck-partial  { background: var(--orange-soft); color: var(--orange); border-color: var(--orange-soft); }
+.mck-notready { background: var(--red-soft); color: var(--red); border-color: var(--red-soft); }
+.mck-na       { background: var(--gray-200); color: var(--gray-500); border-color: var(--gray-200); }
+.mck-btn.sel.mck-ready    { background: var(--green);  color: white; border-color: var(--green); box-shadow: 0 2px 8px rgba(0,184,122,.3); }
+.mck-btn.sel.mck-partial  { background: var(--orange); color: white; border-color: var(--orange); box-shadow: 0 2px 8px rgba(240,120,32,.3); }
+.mck-btn.sel.mck-notready { background: var(--red);    color: white; border-color: var(--red); box-shadow: 0 2px 8px rgba(224,53,53,.3); }
+.mck-btn.sel.mck-na       { background: var(--gray-500); color: white; border-color: var(--gray-500); }
+
+.morning-summary {
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.ms-badge {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+}
+.ms-badge.ready    { background: var(--green-soft); color: var(--green); }
+.ms-badge.partial  { background: var(--orange-soft); color: var(--orange); }
+.ms-badge.notready { background: var(--red-soft); color: var(--red); }
+
+.mck-detail {
+  padding: 10px 16px 12px;
+  background: var(--gray-100);
+  border-top: 1px solid var(--gray-200);
+  display: none;
+}
+.mck-detail.show { display: block; }
+.mck-detail input[type=text] {
+  width: 100%; font-size: 13px;
+  padding: 8px 10px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  background: white; font-family: inherit;
+  margin-bottom: 8px;
+}
+.mck-detail input[type=text]:focus {
+  border-color: var(--blue);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(26,111,212,.1);
+}
+.mck-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 6px; margin-top: 4px;
+}
+.mck-photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--gray-200);
+}
+.mck-photo-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.mck-photo-thumb .mck-del {
+  position: absolute; top: 3px; right: 3px;
+  background: rgba(0,0,0,.6); color: white;
+  border: none; border-radius: 50%;
+  width: 20px; height: 20px;
+  font-size: 11px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.mck-add-photo {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px dashed var(--gray-300);
+  background: white;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; position: relative;
+  font-size: 10px; color: var(--gray-500);
+  font-weight: 600; gap: 2px;
+}
+.mck-add-photo input {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer; font-size: 0;
+}
+.mck-add-photo .add-icon { font-size: 20px; }
+
+.btn-confirm-morning {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--green), #00A86B);
+  color: white; border: none; border-radius: var(--radius-md);
+  font-family: inherit; font-size: 16px; font-weight: 700;
+  cursor: pointer; box-shadow: 0 4px 16px rgba(0,184,122,.35);
+  margin-bottom: 10px;
+}
+.btn-skip-morning {
+  width: 100%; padding: 12px;
+  background: transparent; color: var(--gray-500);
+  border: 1.5px solid var(--gray-300); border-radius: var(--radius-md);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer; margin-bottom: 16px;
+}
+
+/* Morning done badge in header */
+.morning-done-banner {
+  background: var(--green-soft);
+  border: 1px solid var(--green);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+}
+.morning-done-banner.show { display: flex; }
+
 /* ── SUBMIT FOOTER ── */
 .submit-footer {
   position: fixed;
@@ -725,6 +1131,8 @@ input[type=range] {
     <div class="progress-fill" id="progressFill" style="width:17%"></div>
   </div>
   <nav class="section-nav">
+    <button class="nav-tab" id="navMorning" onclick="goMorningScreen()" style="display:none"><span class="tab-dot" style="background:var(--green)"></span> 🌅 เช้า</button>
+    <button class="nav-tab" onclick="goDashboard()"><span class="tab-dot" style="background:var(--gold)"></span> 📊 Dashboard</button>
     <button class="nav-tab active" onclick="goSection(0)"><span class="tab-dot"></span> ข้อมูลทั่วไป</button>
     <button class="nav-tab" onclick="goSection(1)"><span class="tab-dot"></span> Checklist</button>
     <button class="nav-tab" onclick="goSection(2)"><span class="tab-dot"></span> ความคืบหน้า</button>
@@ -733,6 +1141,303 @@ input[type=range] {
     <button class="nav-tab" onclick="goSection(5)"><span class="tab-dot"></span> ภาพ/ลายเซ็น</button>
   </nav>
 </header>
+
+<!-- ══ MORNING CHECKLIST SCREEN ══ -->
+<div class="morning-done-banner" id="morningDoneBanner">
+  <span>✅ กรอก Pre-work Checklist เช้าแล้ว — กรอกส่วนที่เหลือตอนเย็นได้เลย</span>
+  <button onclick="redoMorning()" style="margin-left:auto;flex-shrink:0;background:transparent;border:1px solid var(--green);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">กรอกใหม่</button>
+</div>
+
+<div class="morning-screen" id="morningScreen">
+
+  <div class="morning-header">
+    <div class="mh-icon">🌅</div>
+    <h2>Pre-work Checklist</h2>
+    <p>ตรวจสอบความพร้อมก่อนเริ่มงาน</p>
+  </div>
+
+  <div class="morning-card">
+    <div class="mc-header">
+      <span class="mc-icon">📋</span>
+      <div>
+        <div class="mc-title">ตรวจสอบความพร้อม</div>
+        <div class="mc-sub">กดเลือกสถานะแต่ละรายการ</div>
+      </div>
+      <span id="morningReadyCount" style="margin-left:auto;font-size:12px;font-weight:700;color:var(--green)">0/8 พร้อม</span>
+    </div>
+
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">🦺 Safety</div>
+            <div class="mck-sub">ความปลอดภัย</div>
+          </div>
+          <div class="mck-btns" id="mck_safety">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('safety','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('safety','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('safety','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('safety','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_safety">
+          <input type="text" id="mcknote_safety" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_safety">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('safety',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">📝 Work Permit</div>
+            <div class="mck-sub">ใบอนุญาตทำงาน</div>
+          </div>
+          <div class="mck-btns" id="mck_permits">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('permits','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('permits','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('permits','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('permits','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_permits">
+          <input type="text" id="mcknote_permits" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_permits">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('permits',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">📖 Method / SOP</div>
+            <div class="mck-sub">วิธีการและขั้นตอน</div>
+          </div>
+          <div class="mck-btns" id="mck_method">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('method','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('method','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('method','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('method','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_method">
+          <input type="text" id="mcknote_method" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_method">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('method',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">👷 Manpower</div>
+            <div class="mck-sub">กำลังคน</div>
+          </div>
+          <div class="mck-btns" id="mck_manpower">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('manpower','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('manpower','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('manpower','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('manpower','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_manpower">
+          <input type="text" id="mcknote_manpower" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_manpower">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('manpower',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">📦 Material</div>
+            <div class="mck-sub">วัสดุ-อุปกรณ์</div>
+          </div>
+          <div class="mck-btns" id="mck_material">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('material','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('material','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('material','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('material','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_material">
+          <input type="text" id="mcknote_material" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_material">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('material',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">🔧 Machine / Tool / Equip</div>
+            <div class="mck-sub">เครื่องจักร/เครื่องมือ</div>
+          </div>
+          <div class="mck-btns" id="mck_machine">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('machine','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('machine','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('machine','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('machine','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_machine">
+          <input type="text" id="mcknote_machine" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_machine">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('machine',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">🏗️ Site Coordination</div>
+            <div class="mck-sub">ประสานงานพื้นที่</div>
+          </div>
+          <div class="mck-btns" id="mck_sitecoord">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('sitecoord','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('sitecoord','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('sitecoord','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('sitecoord','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_sitecoord">
+          <input type="text" id="mcknote_sitecoord" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_sitecoord">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('sitecoord',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mck-row">
+      <div style="width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="mck-info">
+            <div class="mck-name">📌 Miscellaneous</div>
+            <div class="mck-sub">อื่นๆ</div>
+          </div>
+          <div class="mck-btns" id="mck_misc">
+            <button class="mck-btn mck-ready sel"   onclick="setMck('misc','ready',this)">✅ พร้อม</button>
+            <button class="mck-btn mck-partial"      onclick="setMck('misc','partial',this)">⚠️ บางส่วน</button>
+            <button class="mck-btn mck-notready"     onclick="setMck('misc','notready',this)">❌ ยังไม่พร้อม</button>
+            <button class="mck-btn mck-na"           onclick="setMck('misc','na',this)">— N/A</button>
+          </div>
+        </div>
+        <div class="mck-detail" id="mckd_misc">
+          <input type="text" id="mcknote_misc" placeholder="หมายเหตุ / รายละเอียดเพิ่มเติม...">
+          <div class="mck-photo-grid" id="mckphotos_misc">
+            <label class="mck-add-photo">
+              <input type="file" accept="image/*" multiple onchange="addMckPhoto('misc',this)">
+              <span class="add-icon">📷</span>
+              <span>เพิ่มรูป</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div>
+
+  <!-- Summary -->
+  <div class="morning-summary" id="morningSummary">
+    <span class="ms-badge ready" id="msReady">✅ พร้อม × 8</span>
+  </div>
+
+  <button class="btn-confirm-morning" onclick="confirmMorning()">
+    ✅ ยืนยัน Checklist → บันทึกช่วงเช้า
+  </button>
+  <button class="btn-skip-morning" onclick="skipMorning()">
+    ข้าม → กรอกรายงานเต็มทันที
+  </button>
+
+</div>
+<!-- ══ END MORNING SCREEN ══ -->
+
+<!-- ══ DASHBOARD SCREEN ══ -->
+<div class="dashboard-screen" id="dashboardScreen">
+
+  <div class="dash-header">
+    <div class="dh-icon">📊</div>
+    <div>
+      <h2>Daily Report Dashboard</h2>
+      <p id="dashDateLabel">กำลังโหลด...</p>
+    </div>
+    <button class="dh-refresh" onclick="loadDashboard()">🔄 รีเฟรช</button>
+  </div>
+
+  <!-- KPI -->
+  <div class="dash-kpi-row">
+    <div class="dash-kpi done">
+      <div class="dk-num" id="dashDoneCount">—</div>
+      <div class="dk-lbl">ส่งแล้ว</div>
+    </div>
+    <div class="dash-kpi total">
+      <div class="dk-num" id="dashTotalCount">—</div>
+      <div class="dk-lbl">ทั้งหมด</div>
+    </div>
+    <div class="dash-kpi pct">
+      <div class="dk-num" id="dashPct">—</div>
+      <div class="dk-lbl">เสร็จ</div>
+    </div>
+  </div>
+
+  <!-- Today's reports -->
+  <div class="dash-section-title">📅 รายงานวันนี้</div>
+  <div id="dashTodayList">
+    <div class="dash-loading">⏳ กำลังโหลด...</div>
+  </div>
+
+  <!-- Recent reports -->
+  <div class="dash-section-title" style="margin-top:16px">🕐 7 วันล่าสุด</div>
+  <div id="dashRecentList">
+    <div class="dash-loading">⏳ กำลังโหลด...</div>
+  </div>
+
+  <button onclick="goBackFromDashboard()" style="width:100%;margin-top:16px;padding:13px;background:var(--navy);color:white;border:none;border-radius:var(--radius-md);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">
+    ← กลับไปกรอกรายงาน
+  </button>
+
+</div>
+<!-- ══ END DASHBOARD SCREEN ══ -->
 
 <div class="content" id="mainContent">
 
@@ -1163,7 +1868,7 @@ input[type=range] {
 
 <script>
 /* ── GOOGLE APPS SCRIPT URL ── */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbw0UHHUkZjmfGIHMqXIcuKIGgPllXGV9_knme6fwjlUFQXyYYHiTq1RnUDdPiecfOKK/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwfKGQnYE5nDGwTVMpNLhdKr5NQgkLNRsQRi3_qwoakX8qQ1OGeJXIkt28isZ3CHE_vUA/exec';
 
 /* ── XSS ESCAPE HELPER ── */
 function esc(str) {
@@ -2025,6 +2730,179 @@ function showToast(msg, type='') {
   toastTimer = setTimeout(()=>t.className='toast', toastDuration);
 }
 
+/* ── MORNING CHECKLIST ── */
+const MCK_KEY = 'dpr_morning_checklist';
+const MCK_ITEMS_LIST = ['safety','permits','method','manpower','material','machine','sitecoord','misc'];
+const mckState = {};
+
+// Init all to 'ready'
+MCK_ITEMS_LIST.forEach(id => mckState[id] = 'ready');
+
+function setMck(id, val, btn) {
+  mckState[id] = val;
+  const group = btn.closest('.mck-btns');
+  group.querySelectorAll('.mck-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  // Show detail panel for all statuses
+  const detail = document.getElementById('mckd_' + id);
+  if (detail) detail.classList.add('show');
+  updateMorningSummary();
+}
+
+function addMckPhoto(id, input) {
+  const grid = document.getElementById('mckphotos_' + id);
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const compressed = await compressImage(e.target.result, 800, 600, 0.65);
+      const thumb = document.createElement('div');
+      thumb.className = 'mck-photo-thumb';
+      thumb.innerHTML = `<img src="${compressed}"><button class="mck-del" onclick="this.parentElement.remove()">✕</button>`;
+      // Insert before the add button
+      const addBtn = grid.querySelector('.mck-add-photo');
+      grid.insertBefore(thumb, addBtn);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateMorningSummary() {
+  const counts = { ready:0, partial:0, notready:0, na:0 };
+  MCK_ITEMS_LIST.forEach(id => counts[mckState[id] || 'ready']++);
+
+  const summary = document.getElementById('morningSummary');
+  summary.innerHTML = '';
+  if (counts.ready)    summary.innerHTML += `<span class="ms-badge ready">✅ พร้อม × ${counts.ready}</span>`;
+  if (counts.partial)  summary.innerHTML += `<span class="ms-badge partial">⚠️ บางส่วน × ${counts.partial}</span>`;
+  if (counts.notready) summary.innerHTML += `<span class="ms-badge notready">❌ ยังไม่พร้อม × ${counts.notready}</span>`;
+  if (counts.na)       summary.innerHTML += `<span class="ms-badge" style="background:var(--gray-200);color:var(--gray-500)">— N/A × ${counts.na}</span>`;
+
+  document.getElementById('morningReadyCount').textContent =
+    `${counts.ready}/8 พร้อม`;
+}
+
+function confirmMorning() {
+  const today = new Date().toDateString();
+
+  // Collect notes and photos per item
+  const notes = {};
+  const photos = {};
+  ['safety','permits','method','manpower','material','machine','sitecoord','misc'].forEach(id => {
+    const noteEl = document.getElementById('mcknote_' + id);
+    notes[id] = noteEl ? noteEl.value : '';
+    const imgs = document.querySelectorAll('#mckphotos_' + id + ' .mck-photo-thumb img');
+    photos[id] = [...imgs].map(img => img.src);
+  });
+
+  const data = {
+    date: today,
+    savedAt: new Date().toISOString(),
+    checklist: { ...mckState },
+    notes,
+    photos,
+  };
+  localStorage.setItem(MCK_KEY, JSON.stringify(data));
+
+  // Hide morning screen, show main form
+  document.getElementById('morningScreen').classList.remove('show');
+  document.getElementById('mainContent').style.display = '';
+  document.getElementById('submitFooter').style.display = '';
+  document.getElementById('morningDoneBanner').classList.add('show');
+
+  // Pre-fill the existing checklist with morning data
+  MCK_ITEMS_LIST.forEach(id => {
+    const val = mckState[id];
+    // Map to existing checklist (ready/notready/na — partial maps to notready)
+    const mappedVal = val === 'partial' ? 'notready' : val;
+    const btn = document.querySelector(`#ckTbody .spl[data-id="${id}"][data-v="${mappedVal}"]`);
+    if (btn) setCK(btn);
+  });
+
+  // Show morning nav tab
+  const navMorning = document.getElementById('navMorning');
+  if (navMorning) navMorning.style.display = '';
+  showToast('✅ บันทึก Pre-work Checklist เช้าแล้ว!', 'success');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function skipMorning() {
+  document.getElementById('morningScreen').classList.remove('show');
+  document.getElementById('mainContent').style.display = '';
+  document.getElementById('submitFooter').style.display = '';
+}
+
+function goMorningScreen() {
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('submitFooter').style.display = 'none';
+  document.getElementById('morningScreen').classList.add('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function redoMorning() {
+  // Clear morning data and show morning screen again
+  localStorage.removeItem(MCK_KEY);
+  // Reset state
+  MCK_ITEMS_LIST.forEach(id => mckState[id] = 'ready');
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('submitFooter').style.display = 'none';
+  document.getElementById('morningDoneBanner').classList.remove('show');
+  document.getElementById('morningScreen').classList.add('show');
+  // Reset all buttons
+  MCK_ITEMS_LIST.forEach(id => {
+    const btns = document.querySelectorAll(`#mck_${id} .mck-btn`);
+    btns.forEach(b => b.classList.remove('sel'));
+    const readyBtn = document.querySelector(`#mck_${id} .mck-ready`);
+    if (readyBtn) readyBtn.classList.add('sel');
+    const detail = document.getElementById('mckd_' + id);
+    if (detail) detail.classList.remove('show');
+    const note = document.getElementById('mcknote_' + id);
+    if (note) note.value = '';
+    const photos = document.getElementById('mckphotos_' + id);
+    if (photos) {
+      photos.querySelectorAll('.mck-photo-thumb').forEach(t => t.remove());
+    }
+  });
+  updateMorningSummary();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function checkMorningDone() {
+  const today = new Date().toDateString();
+  try {
+    const saved = JSON.parse(localStorage.getItem(MCK_KEY) || 'null');
+    if (saved && saved.date === today) {
+      // Morning already done today — restore checklist and go to main form
+      MCK_ITEMS_LIST.forEach(id => {
+        if (saved.checklist[id]) mckState[id] = saved.checklist[id];
+      });
+      document.getElementById('morningScreen').classList.remove('show');
+      document.getElementById('mainContent').style.display = '';
+      document.getElementById('submitFooter').style.display = '';
+      document.getElementById('morningDoneBanner').classList.add('show');
+
+      // Pre-fill existing checklist
+      MCK_ITEMS_LIST.forEach(id => {
+        const val = mckState[id];
+        const mappedVal = val === 'partial' ? 'notready' : val;
+        const btn = document.querySelector(`#ckTbody .spl[data-id="${id}"][data-v="${mappedVal}"]`);
+        if (btn) setCK(btn);
+      });
+      // Restore notes to ck_note fields
+      if (saved.notes) {
+        MCK_ITEMS_LIST.forEach(id => {
+          const noteEl = document.getElementById('ck_note_' + id);
+          if (noteEl && saved.notes[id]) noteEl.value = saved.notes[id];
+        });
+      }
+      // Show morning nav tab
+      const navMorning = document.getElementById('navMorning');
+      if (navMorning) navMorning.style.display = '';
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
 /* ── INIT ── */
 window.onload = () => {
   initDate();
@@ -2034,6 +2912,16 @@ window.onload = () => {
   // pre-open issue detail since there's a sample issue
   document.getElementById('issueToggle').checked = true;
   document.getElementById('issueDetail').classList.add('open');
+
+  // Check if morning checklist already done today
+  const morningDone = checkMorningDone();
+  if (!morningDone) {
+    // Show morning checklist screen first
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('submitFooter').style.display = 'none';
+    document.getElementById('morningScreen').classList.add('show');
+    updateMorningSummary();
+  }
 };
 </script>
 </body>
