@@ -1687,8 +1687,9 @@ function goSection(idx) {
   document.querySelectorAll('.section-panel').forEach((p,i) => {
     p.classList.toggle('active', i===idx);
   });
+  // nav-tab[0] = morning tab (skip), sections start at nav-tab[1]
   document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    t.classList.toggle('active', i===idx);
+    t.classList.toggle('active', i===idx+1);
   });
   currentSection = idx;
   document.getElementById('btnPrev').style.display = idx===0?'none':'';
@@ -1706,8 +1707,8 @@ function goSection(idx) {
 
 function nextSection() {
   if (currentSection < TOTAL_SECTIONS-1) {
-    // mark current tab done
-    document.querySelectorAll('.nav-tab')[currentSection].classList.add('done');
+    // mark current tab done (offset by 1 for morning tab)
+    document.querySelectorAll('.nav-tab')[currentSection+1].classList.add('done');
     goSection(currentSection+1);
   } else {
     submitReport();
