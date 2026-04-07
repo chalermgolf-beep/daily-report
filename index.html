@@ -1684,6 +1684,13 @@ const TOTAL_SECTIONS = 6;
 let currentSection = 0;
 
 function goSection(idx) {
+  // Make sure main content is visible
+  document.getElementById('mainContent').style.display = '';
+  document.getElementById('submitFooter').style.display = '';
+  document.getElementById('morningScreen').classList.remove('show');
+  const ss = document.getElementById('successScreen');
+  if (ss) ss.classList.remove('show');
+
   document.querySelectorAll('.section-panel').forEach((p,i) => {
     p.classList.toggle('active', i===idx);
   });
